@@ -2,6 +2,7 @@
 
 #include "detection.hpp"
 #include "iInference.hpp"
+#include "frameProvider.hpp"
 
 class ObjectDetector{
 private:
@@ -12,5 +13,7 @@ public:
     std::vector<Detection> detect(const cv::Mat &input) {
         return inf -> runInference(input);
     };
+
+
 
 };

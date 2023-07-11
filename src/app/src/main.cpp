@@ -14,7 +14,7 @@ int main() {
     {
       APP_PROFILE_SCOPE("Test scope");
 
-      auto detector = std::make_shared<ObjectDetector>(ObjectDetector());
+      auto detector = std::make_shared<ObjectDetector>();
 
       TrafficAnalyzer app("App", detector);
       
