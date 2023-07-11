@@ -4,9 +4,18 @@ include(${PROJECT_SOURCE_DIR}/cmake/StaticAnalyzers.cmake)
 
 file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-include_directories(include)
+set(INCLUDE_DIRS
+  include
+  include/interfaces
+)
+
+include_directories(${INCLUDE_DIRS})
 
 set(MAIN_FILE src/main.cpp)
+
+set(PROJECT_SOURCES
+  src/inference.cpp
+)
 
 add_executable(${NAME} ${MAIN_FILE})
 

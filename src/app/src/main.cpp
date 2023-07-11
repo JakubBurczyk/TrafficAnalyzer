@@ -4,9 +4,7 @@
 
 #define SDL_MAIN_HANDLED
 
-#include "TrafficAnalyzerApp.hpp"
-// #include "Core/Application.hpp"
-#include "Core/Instrumentor.hpp"
+#include "trafficAnalyzerApp.hpp"
 #include "Core/Log.hpp"
 
 int main() {
@@ -15,7 +13,10 @@ int main() {
 
     {
       APP_PROFILE_SCOPE("Test scope");
-      TrafficAnalyzer app{"App"};
+
+      auto detector = std::make_shared<ObjectDetector>(ObjectDetector());
+
+      TrafficAnalyzer app("App", detector);
       
       app.run();
     }
