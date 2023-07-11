@@ -1,10 +1,14 @@
-set(NAME "App")
+set(NAME "TrafficAnalyzer")
 
 include(${PROJECT_SOURCE_DIR}/cmake/StaticAnalyzers.cmake)
 
-file(COPY App/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(${NAME} App/Main.cpp)
+include_directories(include)
+
+set(MAIN_FILE src/main.cpp)
+
+add_executable(${NAME} ${MAIN_FILE})
 
 if (WIN32)
   # Copy DLL files on Windows to the target App build folder.
@@ -16,4 +20,4 @@ endif ()
 
 target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(${NAME} PRIVATE cxx_std_20)
-target_link_libraries(${NAME} PRIVATE project_warnings Core)
+target_link_libraries(${NAME} ${OpenCV_LIBS} project_warnings Core)

@@ -184,8 +184,7 @@ void Application::set_theme() const {
   const float font_size{18.0F * font_scaling_factor};
 
   io.Fonts->AddFontFromFileTTF("assets/fonts/Manrope/Manrope-Regular.ttf", font_size);
-  io.FontDefault =
-      io.Fonts->AddFontFromFileTTF("assets/fonts/Manrope/Manrope-Regular.ttf", font_size);
+  io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Manrope/Manrope-Regular.ttf", font_size);
   io.FontGlobalScale = 1.0F / font_scaling_factor;
 
   style.WindowRounding = 5.3F;
