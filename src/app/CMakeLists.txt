@@ -7,6 +7,7 @@ file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 set(INCLUDE_DIRS
   include
   include/interfaces
+  include/widgets
 )
 
 include_directories(${INCLUDE_DIRS})
