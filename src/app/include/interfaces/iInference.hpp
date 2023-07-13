@@ -6,7 +6,7 @@ class IInference{
 private:
 
 public:
-    virtual ~IInference() = 0;
+    virtual ~IInference() = default;
 
     virtual std::vector<Detection> runInference(const cv::Mat &input) = 0;
 };

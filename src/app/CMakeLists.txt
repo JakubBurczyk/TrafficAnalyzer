@@ -14,10 +14,11 @@ include_directories(${INCLUDE_DIRS})
 set(MAIN_FILE src/main.cpp)
 
 set(PROJECT_SOURCES
+  include/inference.h
   src/inference.cpp
 )
 
-add_executable(${NAME} ${MAIN_FILE})
+add_executable(${NAME} ${MAIN_FILE} ${PROJECT_SOURCES})
 
 if (WIN32)
   # Copy DLL files on Windows to the target App build folder.
