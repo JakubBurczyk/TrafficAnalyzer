@@ -8,34 +8,36 @@
 #include <imgui.h>
 
 
-#include "objectDetector.hpp"
+#include "trafficAnalyzer.hpp"
+#include "trafficAnalyzerGui.hpp"
+#include "frameProviderWidget.hpp"
 
-class TrafficAnalyzer : public App::Application{
+namespace Traffic{
+
+class TrafficAnalyzerApp : public App::Application{
 private:
-    std::shared_ptr<ObjectDetector> detector_;
+    std::shared_ptr<Traffic::TrafficAnalyzerGui> gui_;
+    std::shared_ptr<Traffic::TrafficAnalyzer> analyzer_;
 
 protected:
     void gui() override{
-
-        if (m_state.show_some_panel) {
-        ImGui::Begin("Some panel", &m_state.show_some_panel);
-        // NOLINTNEXTLINE
-        ImGui::Text("Hello World");
-        ImGui::Text("DUPA");
-        ImGui::End();
-        }
+        gui_ -> gui();
     }
 
 public:
 
-    explicit TrafficAnalyzer(const std::string& title, std::shared_ptr<ObjectDetector> detector)
-        :
-         App::Application(title)
-        ,detector_{detector}
+    explicit TrafficAnalyzerApp(const std::string& title, std::shared_ptr<Traffic::TrafficAnalyzer> analyzer):
+        App::Application(title),
+        analyzer_{analyzer}
     {
+        gui_ = std::make_shared<Traffic::TrafficAnalyzerGui>();
 
+        auto frame_provider = analyzer_ -> get_object_detector() -> get_frame_provider();
+        gui_ -> add_widget(std::make_shared<FrameProviderWidget>(frame_provider));
     }
 
 
     
 };
+
+} //namespace Traffic

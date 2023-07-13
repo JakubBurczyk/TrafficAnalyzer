@@ -35,7 +35,7 @@ private:
 public:
 
 
-    FrameProvider VideoFrameProvider(std::string files_path){
+    static FrameProvider VideoFrameProvider(std::string files_path){
         auto frame_provider = FrameProvider(files_path);
         frame_provider.set_video_mode(true);
         frame_provider.set_video_capture(files_path);
@@ -43,12 +43,12 @@ public:
         return frame_provider;
     }
 
-    FrameProvider ImageFrameProvider(std::string files_path){
+    static FrameProvider ImageFrameProvider(std::string files_path){
         auto frame_provider = FrameProvider(files_path);
         frame_provider.set_video_mode(false);
         
         std::vector<std::string> imgs = utils::get_files_by_extensions(files_path, IMAGE_FORMATS);
-        images_ = std::deque(imgs.begin(), imgs.end());
+        // images_ = std::deque(imgs.begin(), imgs.end());
             
         return frame_provider;
     }

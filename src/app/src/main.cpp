@@ -7,24 +7,28 @@
 #include "trafficAnalyzerApp.hpp"
 #include "Core/Log.hpp"
 
+using namespace Traffic;
+
 int main() {
-  try {
-    APP_PROFILE_BEGIN_SESSION_WITH_FILE("App", "profile.json");
+	try {
+	APP_PROFILE_BEGIN_SESSION_WITH_FILE("App", "profile.json");
 
-    {
-      APP_PROFILE_SCOPE("Test scope");
+	{
+		APP_PROFILE_SCOPE("Test scope");
 
-      auto detector = std::make_shared<ObjectDetector>();
+		auto detector = std::make_shared<ObjectDetector>();
+		auto analyzer = std::make_shared<TrafficAnalyzer>(detector);
 
-      TrafficAnalyzer app("App", detector);
-      
-      app.run();
-    }
+		TrafficAnalyzerApp app("App", analyzer);
+		
+		app.run();
+	}
 
-    APP_PROFILE_END_SESSION();
-  } catch (std::exception& e) {
-    APP_ERROR("Main process terminated with: {}", e.what());
-  }
+	APP_PROFILE_END_SESSION();
 
-  return 0;
+	}catch (std::exception& e) {
+		APP_ERROR("Main process terminated with: {}", e.what());
+	}
+
+	return 0;
 }
