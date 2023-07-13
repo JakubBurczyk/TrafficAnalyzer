@@ -11,6 +11,7 @@
 #include "trafficAnalyzer.hpp"
 #include "trafficAnalyzerGui.hpp"
 #include "frameProviderWidget.hpp"
+#include "objectDetectorWidget.hpp"
 
 namespace Traffic{
 
@@ -32,8 +33,11 @@ public:
     {
         gui_ = std::make_shared<Traffic::TrafficAnalyzerGui>();
 
+        gui_ -> add_widget(std::make_shared<ObjectDetectorWidget>(analyzer_->get_object_detector()));
+        
         auto frame_provider = analyzer_ -> get_object_detector() -> get_frame_provider();
         gui_ -> add_widget(std::make_shared<FrameProviderWidget>(frame_provider));
+
     }
 
 

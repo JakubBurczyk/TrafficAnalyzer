@@ -16,11 +16,11 @@ int main() {
 	{
 		APP_PROFILE_SCOPE("Test scope");
 
-		auto detector = std::make_shared<ObjectDetector>();
-		auto analyzer = std::make_shared<TrafficAnalyzer>(detector);
+		auto frames		= std::make_shared<FrameProvider>("");
+		auto detector 	= std::make_shared<ObjectDetector>(frames);
+		auto analyzer 	= std::make_shared<TrafficAnalyzer>(detector);
 
 		TrafficAnalyzerApp app("App", analyzer);
-		
 		app.run();
 	}
 

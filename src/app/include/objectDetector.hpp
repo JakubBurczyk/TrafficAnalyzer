@@ -13,9 +13,10 @@ private:
 
 public:
 
-    ObjectDetector()
+    ObjectDetector(std::shared_ptr<FrameProvider> frame_provider):
+        frame_provider_{frame_provider}
     {
-
+        
     }
 
     std::vector<Detection> detect(const cv::Mat &input) {
@@ -23,7 +24,6 @@ public:
     };
 
     std::shared_ptr<FrameProvider> get_frame_provider(){ return frame_provider_; };
-
 
 };
 

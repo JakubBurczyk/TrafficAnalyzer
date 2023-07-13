@@ -3,6 +3,8 @@
 #include <string_view>
 #include <filesystem>
 
+
+#define UTILS_DEBUG_NAME "Utils | "
 namespace utils{
 
 // static bool endsWith(std::string_view str, std::string_view suffix)
@@ -22,7 +24,7 @@ static std::vector<std::string> get_files_by_extensions(std::string path, std::v
 
             bool valid_entry = false;
             std::string path;
-
+            
             for(auto &format : extensions){
                 path = entry.path();
                 if(path.ends_with(format)){
@@ -37,7 +39,19 @@ static std::vector<std::string> get_files_by_extensions(std::string path, std::v
 
     }
 
+    APP_DEBUG(UTILS_DEBUG_NAME "Loaded: {} files", files.size());
     return files;
 }
+
+// static std::vector<std::string> get_files(std::string path){
+//     std::vector<std::string> files;
+
+//     for (const auto & entry : std::filesystem::directory_iterator(path)){
+//             files.push_back(path);
+//     }
+
+//     return files;
+// }
+
 
 }//namespace utils
