@@ -18,6 +18,8 @@ private:
     bool ready_ = false;
     bool video_mode_ = false;
 
+    int frame_cnt_ = 0;
+
     std::string path_ = "./";
 
     cv::VideoCapture video_capture_;
@@ -26,7 +28,7 @@ private:
 
 public:
 
-    int frame_cnt_ = 0;
+    
 
     FrameProvider(std::string path)
         :path_(path)
@@ -34,7 +36,8 @@ public:
     }
 
     bool is_ready(){ return ready_; }
-
+    int get_frame_number() { return frame_cnt_; }
+    std::string get_path_() { return path_; }
 
     void set_video_mode(bool mode = false){
         APP_DEBUG(FP_DEBUG_NAME "Setting video mode to: {}", mode);

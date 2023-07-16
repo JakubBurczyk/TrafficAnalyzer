@@ -56,30 +56,48 @@ public:
             }
         }
 
-        if(ImGui::Button("Show frames")){
-            frame_provider_ -> start();
-            display_frames = true;
-        }
+        char path[512];
+        std::string provider_path = frame_provider_ -> get_path_();
+        std::copy(provider_path.begin(),provider_path.end(), path);
 
-        
-        if(frame_provider_ -> is_ready() && display_frames){
-            cv::Mat frame = frame_provider_ -> get_next_frame();
-            
-            if(frame.empty()){
+        ImGui::InputText("Path", path, 512, ImGuiInputTextFlags_ReadOnly );
+
+        if(frame_provider_ -> is_ready()){
+
+            if(ImGui::Button("Show frames")){
+                frame_provider_ -> start();
+                display_frames = true;
+            }
+
+            ImGui::SameLine();
+            if(ImGui::Button("Stop preview")){
                 frame_provider_ -> stop();
+                display_frames = false;
             }
-            else{
 
-                // ImGui::Begin("Frames");
-                APP_DEBUG(FP_DEBUG_NAME "Displaying frame {}", frame_provider_ -> frame_cnt_);
-                image_viewer_ -> show_image(frame);
-                // std::this_thread::sleep_for(std::chrono::milliseconds(16));
-                
+            ImGui::SameLine();
+            if(ImGui::Button("Toggle Image Controls")){
+                image_viewer_ -> toggle_controls();
             }
-        
+
+
+            if(display_frames){
+                cv::Mat frame = frame_provider_ -> get_next_frame();
+                
+                if(frame.empty()){
+                    frame_provider_ -> stop();
+                }
+                else{
+
+                    ImGui::BeginChild("Frames");
+                    APP_DEBUG(FP_DEBUG_NAME "Displaying frame {}", frame_provider_ -> get_frame_number() );
+                    image_viewer_ -> show_image(frame);
+                    ImGui::EndChild();
+                    
+                }
+            }
         }
         
-
         ImGui::End();
         
         if(fileDialog){
@@ -90,10 +108,12 @@ public:
                 std::string path = fileDialog -> GetSelected().string();
                 frame_provider_ -> set_path(path);
                 frame_provider_ -> set_video_mode(video_);
+                frame_provider_ -> start();
                 fileDialog -> ClearSelected();
             }
         }
 
+    
     }
 
     void set_file_types(){
