@@ -8,6 +8,8 @@ set(INCLUDE_DIRS
   include
   include/interfaces
   include/widgets
+  include/GL
+  include/KHR
 )
 
 include_directories(${INCLUDE_DIRS})
@@ -17,6 +19,7 @@ set(MAIN_FILE src/main.cpp)
 set(PROJECT_SOURCES
   include/inference.h
   src/inference.cpp
+  src/gl3w.c
 )
 
 add_executable(${NAME} ${MAIN_FILE} ${PROJECT_SOURCES})

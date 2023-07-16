@@ -11,7 +11,7 @@ namespace Traffic{
 class ObjectDetector{
 private:
     std::string onnx_path_ = "";
-
+    
     std::shared_ptr<IInference> inf;
     std::shared_ptr<FrameProvider> frame_provider_;
 

@@ -3,6 +3,11 @@
 #include "frameProvider.hpp"
 #include "widget.hpp"
 #include "imfilebrowser.h"
+#include <thread>
+#include <chrono>
+
+#include "GL/gl3w.h"
+#include <SDL.h>
 
 namespace Traffic{
 
@@ -15,7 +20,8 @@ private:
 
     bool from_directory_ = false;
     bool video_ = false;
-
+    bool display_frames = false;
+    
 public:
 
     FrameProviderWidget(std::shared_ptr<FrameProvider> frame_provider, bool hidden = false)
@@ -49,8 +55,47 @@ public:
             }
         }
 
-        ImGui::End();
+        if(ImGui::Button("Show frames")){
+            frame_provider_ -> start();
+            gl3wInit();
+            display_frames = true;
+        }
 
+        
+        if(frame_provider_ -> is_ready() && display_frames){
+            cv::Mat frame = frame_provider_ -> get_next_frame();
+            GLuint texture;
+            
+            if(frame.empty()){
+                frame_provider_ -> stop();
+            }
+            else{
+
+                // ImGui::Begin("Frames");
+                APP_DEBUG(FP_DEBUG_NAME "Displaying frame {}", frame_provider_ -> frame_cnt_);
+                frame_provider_ -> frame_cnt_++;
+
+                // std::this_thread::sleep_for(std::chrono::milliseconds(16));
+                cv::imwrite("./saves/test_"+ std::to_string(frame_provider_ -> frame_cnt_)+".png", frame);
+                glGenTextures( 1, &texture );
+                glBindTexture( GL_TEXTURE_2D, texture );
+                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+                glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+
+                glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, frame.cols, frame.rows, 0, GL_BGR
+                            , GL_UNSIGNED_BYTE, frame.data );
+
+                ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( frame.cols, frame.rows ) );
+                // frame_provider_ ->show_frame(frame);
+            }
+            
+            // ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+        }
+        
+
+        ImGui::End();
+        
         if(fileDialog){
     
             fileDialog -> Display();
@@ -59,7 +104,6 @@ public:
                 std::string path = fileDialog -> GetSelected().string();
                 frame_provider_ -> set_path(path);
                 frame_provider_ -> set_video_mode(video_);
-                frame_provider_ -> init();
                 fileDialog -> ClearSelected();
             }
         }

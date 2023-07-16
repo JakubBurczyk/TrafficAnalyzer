@@ -5,7 +5,7 @@ include(cmake/AppleBuild.cmake)
 project(
   BasicGuiProjectSetupSDL2OpenGL
   DESCRIPTION "Base gui project setup with SDL2 and OpenGL."
-  LANGUAGES CXX)
+  LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
