@@ -6,8 +6,7 @@
 #include <thread>
 #include <chrono>
 
-#include "GL/gl3w.h"
-#include <SDL.h>
+#include "imageViewer.hpp"
 
 namespace Traffic{
 
@@ -17,6 +16,8 @@ private:
 
     std::shared_ptr<FrameProvider> frame_provider_;
     std::shared_ptr<ImGui::FileBrowser> fileDialog;
+    
+    std::shared_ptr<ImageViewer> image_viewer_;
 
     bool from_directory_ = false;
     bool video_ = false;
@@ -28,7 +29,7 @@ public:
     :
         frame_provider_{frame_provider}
     {
-        
+        image_viewer_ = std::make_shared<ImageViewer>();
         set_hidden_state(hidden);
     }
 
@@ -57,14 +58,12 @@ public:
 
         if(ImGui::Button("Show frames")){
             frame_provider_ -> start();
-            gl3wInit();
             display_frames = true;
         }
 
         
         if(frame_provider_ -> is_ready() && display_frames){
             cv::Mat frame = frame_provider_ -> get_next_frame();
-            GLuint texture;
             
             if(frame.empty()){
                 frame_provider_ -> stop();
@@ -73,24 +72,11 @@ public:
 
                 // ImGui::Begin("Frames");
                 APP_DEBUG(FP_DEBUG_NAME "Displaying frame {}", frame_provider_ -> frame_cnt_);
-                frame_provider_ -> frame_cnt_++;
-
+                image_viewer_ -> show_image(frame);
                 // std::this_thread::sleep_for(std::chrono::milliseconds(16));
-                cv::imwrite("./saves/test_"+ std::to_string(frame_provider_ -> frame_cnt_)+".png", frame);
-                glGenTextures( 1, &texture );
-                glBindTexture( GL_TEXTURE_2D, texture );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-                glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
-
-                glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, frame.cols, frame.rows, 0, GL_BGR
-                            , GL_UNSIGNED_BYTE, frame.data );
-
-                ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( frame.cols, frame.rows ) );
-                // frame_provider_ ->show_frame(frame);
+                
             }
-            
-            // ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+        
         }
         
 

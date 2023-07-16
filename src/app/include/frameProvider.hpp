@@ -14,7 +14,6 @@ std::vector<std::string> IMAGE_FORMATS {"jpeg", "jpg", "png"};
 
 class FrameProvider{
 private:
-    // ImageViewer image_viewer_;
 
     bool ready_ = false;
     bool video_mode_ = false;
@@ -86,10 +85,6 @@ public:
             images_.pop_front();
         }
         return frame;
-    }
-
-    void show_frame(cv::Mat &frame){
-        
     }
     
 };
