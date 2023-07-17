@@ -18,10 +18,15 @@ private:
     std::shared_ptr<ImGui::FileBrowser> fileDialog;
     
     std::shared_ptr<ImageViewer> image_viewer_;
-
+    // std::shared_ptr<ImageViewer> image_viewer2_;
     bool from_directory_ = false;
     bool video_ = false;
     bool display_frames = false;
+
+    int average_fps_ = 0;
+
+    std::thread image_thread_;
+    cv::Mat frame_;
     
 public:
 
@@ -30,7 +35,15 @@ public:
         frame_provider_{frame_provider}
     {
         image_viewer_ = std::make_shared<ImageViewer>();
+        // image_viewer2_ = std::make_shared<ImageViewer>();
         set_hidden_state(hidden);
+
+        image_thread_ = std::thread([this](){
+            std::unique_lock lock(frame_provider_ -> mtx_notify_frame_);
+            frame_provider_ -> cv_frame_.wait(lock);
+            frame_ = frame_provider_ -> get_frame();
+            }
+        );
     }
 
     void gui() override {
@@ -62,7 +75,7 @@ public:
 
         ImGui::InputText("Path", path, 512, ImGuiInputTextFlags_ReadOnly );
 
-        if(frame_provider_ -> is_ready()){
+        if(frame_provider_ -> has_path_()){
 
             if(ImGui::Button("Show frames")){
                 frame_provider_ -> start();
@@ -74,27 +87,30 @@ public:
                 frame_provider_ -> stop();
                 display_frames = false;
             }
+            
+            average_fps_ += 1000.0 / (frame_provider_ -> get_ms_since_read().count());
+            average_fps_ = average_fps_ / 2;
 
-            ImGui::SameLine();
-            if(ImGui::Button("Toggle Image Controls")){
-                image_viewer_ -> toggle_controls();
-            }
+            ImGui::Text("FPS: %d", average_fps_);
+            ImGui::Text("Frame: %d", frame_provider_ -> get_frame_number());
 
-
-            if(display_frames){
-                cv::Mat frame = frame_provider_ -> get_next_frame();
+            if(display_frames && frame_provider_ -> is_ready()){
                 
-                if(frame.empty()){
-                    frame_provider_ -> stop();
-                }
-                else{
+                // cv::Mat frame = frame_provider_ -> get_frame();
+                
+
+                // if(!frame_provider_ -> next_frame()){
+                //     display_frames = false;
+                // }
+                // else{
 
                     ImGui::BeginChild("Frames");
                     APP_DEBUG(FP_DEBUG_NAME "Displaying frame {}", frame_provider_ -> get_frame_number() );
-                    image_viewer_ -> show_image(frame);
+                    image_viewer_ -> show_image(frame_);
+                    // image_viewer2_ -> show_image(frame);
                     ImGui::EndChild();
                     
-                }
+                // }
             }
         }
         

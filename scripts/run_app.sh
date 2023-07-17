@@ -1,3 +1,3 @@
-cd build/debug/src/app/
+cd build/release/src/app/
 pwd
 exec ./TrafficAnalyzer

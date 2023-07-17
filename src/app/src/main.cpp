@@ -9,10 +9,11 @@
 
 using namespace Traffic;
 
+
 int main() {
 	try {
 	APP_PROFILE_BEGIN_SESSION_WITH_FILE("App", "profile.json");
-
+	gl3wInit();
 	{
 		APP_PROFILE_SCOPE("Test scope");
 

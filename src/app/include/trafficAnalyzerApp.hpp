@@ -10,6 +10,7 @@
 
 #include "trafficAnalyzer.hpp"
 #include "trafficAnalyzerGui.hpp"
+#include "trafficAnalyzerWidget.hpp"
 #include "frameProviderWidget.hpp"
 #include "objectDetectorWidget.hpp"
 
@@ -38,6 +39,8 @@ public:
         auto frame_provider = analyzer_ -> get_object_detector() -> get_frame_provider();
         gui_ -> add_widget(std::make_shared<FrameProviderWidget>(frame_provider));
 
+
+        gui_ -> add_widget(std::make_shared<TrafficAnalyzerWidget>(analyzer_));
     }
 
 

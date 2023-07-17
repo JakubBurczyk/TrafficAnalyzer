@@ -1,1 +1,1 @@
-ninja -C build/debug
+ninja -C build/release
