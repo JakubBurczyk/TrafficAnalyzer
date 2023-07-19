@@ -16,7 +16,9 @@ namespace Traffic{
 class TrafficAnalyzer{
 private:
     std::mutex mtx_run_;
+    bool run_at_least_once = false;
     bool run_ = false;
+    bool previous_run_ = false;
 
     std::shared_ptr<ObjectDetector> detector_;
     std::shared_ptr<FrameProvider> frame_provider_;
@@ -47,40 +49,61 @@ public:
     }
 
     void run_bg(){
-        if(!run_){
-            run_ = true;
 
-            analyzer_thread_ = std::thread([this](){
-                while(true){
-                    std::cout << "Loop\n"; 
-                    if(!is_running()){ return; }{}
-
-                    update();
-                }
-            });
-        }
+        std::cout << "Creating thread" << std::endl;
         
+        analyzer_thread_ = std::thread([this](){
+            while(true){
+                // std::cout << "Loop\n"; 
+                if(!is_running()){ break; }
+
+                update();
+            }
+            std::cout << "Thread done\n";
+            return;
+        });
     }
 
-    void join(){
-        analyzer_thread_.join();
+    void join(){        
+        if(analyzer_thread_.joinable()){
+            std::cout << "Joining thread" << std::endl;
+            analyzer_thread_.join();
+        }
     }
 
     bool start(){
         std::unique_lock<std::mutex> lock(mtx_run_);
-        bool previous_run_ = run_;
+        
+        std::cout << run_ << " | " << previous_run_ << std::endl;
+
+        if(!run_ && run_at_least_once){
+            join();
+        }
+
+        run_at_least_once = true;
+        run_ = true;
+        run_bg();
+
         return !previous_run_;
+
     }
 
     bool stop(){
         std::unique_lock<std::mutex> lock(mtx_run_);
-        bool previous_run_ = run_;
         run_ = false;
         std::cout << "STOPPING" << std::endl;
         return previous_run_;
     }
 
-    bool run_detector(){
+    void reset(){
+        stop();
+        frame_provider_ -> reset();
+        start();
+    }
+
+    bool run_detector(bool run){
+        if(!run){ return false;}
+
         bool result = detector_ -> is_ready();
 
         if(result){
@@ -93,18 +116,18 @@ public:
     bool advance_frame(){
         bool result = frame_provider_ -> next_frame();
         if(result){
-            std::cout << "Getting frame" << std::endl;
+            // std::cout << "Getting frame" << std::endl;
             frame_ = frame_provider_ -> get_frame();
         }
         return result;
     }
 
     bool update(){
-        std::cout << "Update\n";
+        // std::cout << "Update\n";
         bool result = false;
 
         result = advance_frame();
-        result = run_detector();
+        result = run_detector(result);
 
         return result;
         

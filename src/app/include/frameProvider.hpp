@@ -69,9 +69,9 @@ public:
 
 
     void start(){
-        std::cout << "FRAME PROVIDER STARTED\n";
         if(running_){ return; }
-
+        std::cout << "FRAME PROVIDER STARTED\n";
+        
         frame_cnt_ = 0;
         if(video_mode_){
             ready_ = video_capture_.open(path_);

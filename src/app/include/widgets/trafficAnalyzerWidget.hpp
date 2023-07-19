@@ -29,16 +29,19 @@ public:
         ImGui::Begin("Traffic Analyzer");
 
         if(ImGui::Button("Start")){
-            if(analyzer_ -> start()){
-                analyzer_ -> run_bg();
-            }
+            analyzer_ -> start();
         }
         
         ImGui::SameLine();
         if(ImGui::Button("Stop")){
             if(analyzer_ -> stop()){
-                analyzer_ -> join();
+                ;
             };
+        }
+
+        ImGui::SameLine();
+        if(ImGui::Button("Reset")){
+            analyzer_ -> reset();
         }
 
         ImGui::End();
