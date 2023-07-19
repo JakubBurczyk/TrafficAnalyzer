@@ -15,8 +15,7 @@ std::vector<std::string> IMAGE_FORMATS {"jpeg", "jpg", "png"};
 class FrameProvider{
 private:
     
-    
-
+    bool running_ = false;
     bool ready_ = false;
     bool video_mode_ = false;
 
@@ -34,9 +33,11 @@ private:
     std::chrono::system_clock::time_point last_frame_read_;
     std::chrono::milliseconds ms_since_last_frame_{0};
 
-public:
     std::condition_variable cv_frame_;
     std::mutex mtx_notify_frame_;
+
+public:
+    
 
     FrameProvider(std::string path)
         :path_(path)
@@ -44,64 +45,75 @@ public:
     }
 
     bool is_ready(){ return ready_; }
+    bool is_running() { return running_; }
     bool has_path_() { return path_initialized_; }
 
     int get_frame_number() { return frame_cnt_; }
     std::string get_path_() { return path_; }
     std::chrono::milliseconds get_ms_since_read(){ return ms_since_last_frame_; }
 
-    const cv::Mat& get_const_frame_ref(){ return frame_; }
+    const cv::Mat& get_const_frame_ref(){return frame_; }
     cv::Mat& get_frame_ref(){ return frame_; }
     cv::Mat get_frame(){ return frame_; }
 
+    std::condition_variable& get_cv_new_frame(){ return cv_frame_; };
+    std::mutex& get_mtx_new_frame(){ return mtx_notify_frame_; };
+
     void set_video_mode(bool mode = false){
-        APP_DEBUG(FP_DEBUG_NAME "Setting video mode to: {}", mode);
         video_mode_ = mode; 
     }
     void set_path(std::string path){
-        APP_DEBUG(FP_DEBUG_NAME "Setting path to: {}", path);
         path_ = path;
         path_initialized_ = true;
     }
 
+
     void start(){
-        stop();
+        std::cout << "FRAME PROVIDER STARTED\n";
+        if(running_){ return; }
+
         frame_cnt_ = 0;
-        APP_DEBUG(FP_DEBUG_NAME "Initializing | Path: {} | Video Mode: {}" , path_, video_mode_);
         if(video_mode_){
             ready_ = video_capture_.open(path_);
-            if(ready_){
-                APP_DEBUG(FP_DEBUG_NAME "Video file opened" );
-            }
         }
         else{
             auto imgs = utils::get_files_by_extensions(path_,IMAGE_FORMATS);
             images_ = std::deque(imgs.begin(), imgs.end());
             ready_ = !images_.empty();
-            if(ready_){
-                APP_DEBUG(FP_DEBUG_NAME "Detected [{}] images" , images_.size());
-            }
         }
-        
-        APP_DEBUG(FP_DEBUG_NAME "Ready state: {}" , ready_);
 
         //Initialize first frame
         if(ready_ ){
+            running_ = true;
             next_frame();
         }
     }
 
+    void pause(){
+        running_ = false;
+    }
+
+    void reset(){
+        stop();
+        start();
+        
+    }
+
     void stop(){
-        APP_DEBUG(FP_DEBUG_NAME "Stopping FrameProvider");
-        ready_ = false;
+        pause();
+        
         if(video_mode_){
             video_capture_.release();
+            ready_ = video_capture_.isOpened();
         }else{
             images_ = std::deque<std::string>{};
+            ready_ = images_.size() == 0;
         }
     }
 
     bool next_frame(){
+        if(!running_){ return false; }
+
         if(video_mode_){
             video_capture_ >> frame_;
         }else if(!images_.empty()){

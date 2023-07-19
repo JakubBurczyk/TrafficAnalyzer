@@ -14,26 +14,30 @@ private:
     bool CUDA_ = false;
     bool ready_ = false;
     std::shared_ptr<IInference> inf;
-    std::shared_ptr<FrameProvider> frame_provider_;
 
     std::vector<Detection> detections_prev_;
     std::vector<Detection> detections_;
 
+    std::condition_variable cv_detections_;
+    std::mutex mtx_notify_detections_;
 
+    cv::Mat frame_;
 
 public:
 
-    ObjectDetector(std::shared_ptr<FrameProvider> frame_provider):
-        frame_provider_{frame_provider}
+    ObjectDetector()
     {
         
     }
 
     bool is_ready(){ return ready_; }
     bool get_CUDA_mode() { return CUDA_; }
-    std::shared_ptr<FrameProvider> get_frame_provider(){ return frame_provider_; }
+
     const std::string& get_model_path(){ return onnx_path_; }
     std::vector<Detection> get_detections(){ return detections_; }
+    std::condition_variable& get_cv_detections(){ return cv_detections_; }
+    std::mutex& get_mtx_detections(){ return mtx_notify_detections_; }
+
 
     void set_onnx_path(std::string path){ onnx_path_ = path; }
     void toggle_CUDA_mode_(){ CUDA_ = !CUDA_; }
@@ -50,28 +54,23 @@ public:
         return ready_;
     }
 
-    void detect(cv::Mat &frame) {
-        
+    void detect(const cv::Mat &frame) {
+        frame_ = frame.clone();
         detections_prev_ = detections_;
-        APP_DEBUG(OD_DEBUG_NAME "Running NN [{}x{}]",frame.cols, frame.rows);
-        detections_ = inf -> runInference(frame);
-        APP_DEBUG(OD_DEBUG_NAME "Detected {} objects", detections_.size());
+        detections_ = inf -> runInference(frame_);
+        cv_detections_.notify_all();
     };
 
-    cv::Mat visualize(const cv::Mat &frame){
-        APP_DEBUG(OD_DEBUG_NAME "Running visualization");
-        cv::Mat visualization_frame = frame.clone();
+    cv::Mat visualize(){
+        cv::Mat visualization_frame = frame_.clone();
         for(auto &detection : detections_){
             cv::Rect box = detection.box;
-            cv::Scalar color = detection.color;
+            cv::Scalar color = cv::Scalar(0,0,255);
 
             cv::rectangle(visualization_frame, box, color, 2);
         }
-        APP_DEBUG(OD_DEBUG_NAME "Visualized {} objects", detections_.size());
         return visualization_frame;
     }
-
-
 
 };
 

@@ -18,8 +18,8 @@ namespace Traffic{
 
 class TrafficAnalyzerApp : public App::Application{
 private:
-    std::shared_ptr<Traffic::TrafficAnalyzerGui> gui_;
-    std::shared_ptr<Traffic::TrafficAnalyzer> analyzer_;
+    std::shared_ptr<TrafficAnalyzerGui> gui_;
+    std::shared_ptr<TrafficAnalyzer> analyzer_;
 
 protected:
     void gui() override{
@@ -28,17 +28,15 @@ protected:
 
 public:
 
-    explicit TrafficAnalyzerApp(const std::string& title, std::shared_ptr<Traffic::TrafficAnalyzer> analyzer):
+    explicit TrafficAnalyzerApp(const std::string& title, std::shared_ptr<TrafficAnalyzer> analyzer):
         App::Application(title),
         analyzer_{analyzer}
     {
-        gui_ = std::make_shared<Traffic::TrafficAnalyzerGui>();
+        gui_ = std::make_shared<TrafficAnalyzerGui>();
 
         gui_ -> add_widget(std::make_shared<ObjectDetectorWidget>(analyzer_->get_object_detector()));
         
-        auto frame_provider = analyzer_ -> get_object_detector() -> get_frame_provider();
-        gui_ -> add_widget(std::make_shared<FrameProviderWidget>(frame_provider));
-
+        gui_ -> add_widget(std::make_shared<FrameProviderWidget>(analyzer_ -> get_frame_provider()));
 
         gui_ -> add_widget(std::make_shared<TrafficAnalyzerWidget>(analyzer_));
     }

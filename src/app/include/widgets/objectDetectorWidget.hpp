@@ -15,11 +15,16 @@ class ObjectDetectorWidget : public Widget{
 private:
 
     std::shared_ptr<ObjectDetector> object_detector_;
-    std::shared_ptr<FrameProvider> frame_provider_;
+
     std::shared_ptr<ImGui::FileBrowser> fileDialog;
     std::shared_ptr<ImageViewer> image_viewer_;
 
     bool run_detections_ = false;
+
+    std::thread image_thread_;
+    cv::Mat visualization_frame_;
+
+    int i = 0;
 public:
 
     ObjectDetectorWidget(std::shared_ptr<ObjectDetector> object_detector, bool hidden = false)
@@ -27,11 +32,18 @@ public:
         object_detector_{object_detector}
     {
         image_viewer_ = std::make_shared<ImageViewer>();
-        frame_provider_ = object_detector_ -> get_frame_provider();
 
         set_hidden_state(hidden);
         fileDialog = std::make_shared<ImGui::FileBrowser>();
         fileDialog -> SetTypeFilters({".onnx"});
+        i++;
+        image_thread_ = std::thread([this](){
+                while(true){
+                    std::unique_lock lock(object_detector_ -> get_mtx_detections());
+                    object_detector_ -> get_cv_detections().wait(lock);
+                    visualization_frame_ = object_detector_ -> visualize();
+                }
+            });
     }
 
     void gui() override {
@@ -41,56 +53,22 @@ public:
             object_detector_ -> toggle_CUDA_mode_();
         }
 
+        ImGui::SameLine();
         if(ImGui::Button("Select ONNX file")){
                 fileDialog -> Open();
         }
 
         ImGui::Text("CUDA mode: %b", object_detector_ -> get_CUDA_mode());
+        ImGui::Text("Model path: %s", object_detector_ -> get_model_path().c_str());
 
         if( object_detector_ -> is_ready()){
-            
-            ImGui::Text("Model path: %s", object_detector_ -> get_model_path().c_str());
-
-            if(ImGui::Button("Start detections")){
-                frame_provider_ -> start();
-                run_detections_= true;
+            if(ImGui::Button("Preview")){
+                image_viewer_ -> toggle_enabled();
             }
 
-            ImGui::SameLine();
-            if(ImGui::Button("Stop detections")){
-                frame_provider_ -> stop();
-                run_detections_ = false;
-            }
-
-            if(run_detections_ && frame_provider_ -> is_ready())
-            {
-                cv::Mat frame = frame_provider_ -> get_frame();
-
-                object_detector_ -> detect(frame);
-                cv::Mat visualization = object_detector_ -> visualize(frame);
-
-                for(auto &detection : object_detector_ -> get_detections()){
-                    cv::Rect box = detection.box;
-                    cv::Scalar color = cv::Scalar(255,0,0);
-
-                    cv::rectangle(visualization, box, color, 2);
-                }
-
-                if(!frame_provider_ -> next_frame()){
-                    frame_provider_ -> stop();
-                    run_detections_ = false;
-
-                }else{
-                    ImGui::BeginChild("Frames");
-                    std::cout << "Displaying frame :" <<  frame_provider_ -> get_frame_number() << "\n";
-
-                    image_viewer_ -> show_image(visualization);
-                    ImGui::EndChild();
-                }
-
-
-            }
-
+            ImGui::BeginChild("Frames");
+            image_viewer_ -> show_image(visualization_frame_);
+            ImGui::EndChild();
             
         }
 

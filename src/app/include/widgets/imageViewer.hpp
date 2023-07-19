@@ -12,10 +12,13 @@ private:
     static int active_instances_;
     static std::mutex mtx_init_;
     static std::mutex mtx_show_;
+
     bool show_controls_ = false;
+    bool enabled_ = false;
 
     GLuint texture_;
     std::string name ="";
+    std::mutex mtx_tex;
 
     float width_ = 0;
     float height_ = 0;
@@ -24,6 +27,33 @@ private:
     int scale_h_ = 10;
 
     float INT_SCALE_FACTOR = 10;
+
+public:
+
+    ImageViewer(){
+        std::unique_lock<std::mutex>(ImageViewer::mtx_init_);
+        if(!ImageViewer::initialized_){
+            gl3wInit();
+        }
+        active_instances_++;
+
+        glGenTextures( 1, &texture_ );
+
+        name = "[" + std::to_string(texture_) + "]";
+    }
+
+    bool is_enabled(){ return enabled_; }
+
+    void toggle_enabled(){ enabled_ = !enabled_; }
+    void hide_controls(){ show_controls_ = false; }
+    void show_controls(){ show_controls_ = true; }
+    void toggle_controls(){ show_controls_ = !show_controls_; }
+
+    void set_width_scale(double scale) { scale_w_ = scale; }
+    void set_height_scale(double scale) { scale_h_ = scale; }
+
+    int &get_width_scale_ref(){ return scale_w_; };
+    int &get_height_scale_ref(){ return scale_h_; };
 
     void set_image(cv::Mat &frame){
         glBindTexture( GL_TEXTURE_2D, texture_ );
@@ -42,33 +72,15 @@ private:
  
     }
 
-public:
-
-    ImageViewer(){
-        std::unique_lock<std::mutex>(ImageViewer::mtx_init_);
-        if(!ImageViewer::initialized_){
-            gl3wInit();
-        }
-        active_instances_++;
-
-        glGenTextures( 1, &texture_ );
-
-        name = "[" + std::to_string(texture_) + "]";
-    }
-
-    void hide_controls(){ show_controls_ = false; }
-    void show_controls(){ show_controls_ = true; }
-    void toggle_controls(){ show_controls_ = !show_controls_; }
-
-    void set_width_scale(double scale) { scale_w_ = scale; }
-    void set_height_scale(double scale) { scale_h_ = scale; }
-
-    int &get_width_scale_ref(){ return scale_w_; };
-    int &get_height_scale_ref(){ return scale_h_; };
-
     void show_image(cv::Mat &frame){
-        std::unique_lock<std::mutex>(ImageViewer::mtx_show_);
+        if(!enabled_){
+            ImGui::Text("Image preview disabled");
+            return;
+        }
+
         set_image(frame);
+
+        std::unique_lock<std::mutex>(ImageViewer::mtx_show_);
 
         if(ImGui::Button(("Toggle Image Controls" + name).c_str())){
             toggle_controls();

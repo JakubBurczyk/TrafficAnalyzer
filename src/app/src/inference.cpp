@@ -13,22 +13,22 @@ Inference::Inference(const std::string &onnxModelPath, const cv::Size &modelInpu
 
 std::vector<Detection> Inference::runInference(const cv::Mat &input)
 {
-    std::cout << "INFERENCE | start\n";
+    // std::cout << "INFERENCE | start\n";
     cv::Mat modelInput = input;
     if (letterBoxForSquare && modelShape.width == modelShape.height){
         modelInput = formatToSquare(modelInput);
-        std::cout << "INFERENCE | formatted to square\n";
+        // std::cout << "INFERENCE | formatted to square\n";
     }
         
     cv::Mat blob;
     cv::dnn::blobFromImage(modelInput, blob, 1.0/255.0, modelShape, cv::Scalar(), true, false);
-    std::cout << "INFERENCE | blob done\n";
+    // std::cout << "INFERENCE | blob done\n";
 
     net.setInput(blob);
-    std::cout << "INFERENCE | nn input set\n";
+    // std::cout << "INFERENCE | nn input set\n";
     std::vector<cv::Mat> outputs;
     net.forward(outputs, net.getUnconnectedOutLayersNames());
-    std::cout << "INFERENCE | nn forwardprop\n";
+    // std::cout << "INFERENCE | nn forwardprop\n";
 
     int rows = outputs[0].size[1];
     int dimensions = outputs[0].size[2];

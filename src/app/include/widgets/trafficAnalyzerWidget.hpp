@@ -28,7 +28,18 @@ public:
     void gui() override {
         ImGui::Begin("Traffic Analyzer");
 
+        if(ImGui::Button("Start")){
+            if(analyzer_ -> start()){
+                analyzer_ -> run_bg();
+            }
+        }
         
+        ImGui::SameLine();
+        if(ImGui::Button("Stop")){
+            if(analyzer_ -> stop()){
+                analyzer_ -> join();
+            };
+        }
 
         ImGui::End();
     }
