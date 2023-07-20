@@ -1,12 +1,14 @@
 #pragma once
 #include "imgui.h"
-#include "imfilebrowser.h"
 
 #include <GL/gl.h>
 
-#include "widget.hpp"
-#include "trafficAnalyzer.hpp"
 
+#include "imfilebrowser.h"
+#include "widget.hpp"
+
+
+#include "trafficAnalyzer.hpp"
 
 namespace Traffic{
 
@@ -15,6 +17,28 @@ class TrafficAnalyzerWidget : public Widget{
 private:
 
     std::shared_ptr<TrafficAnalyzer> analyzer_;
+
+
+protected:
+
+    void traffic_analyzer_gui(){
+        ImGui::Text("Analyze traffic");
+
+        if(ImGui::Button("Start Analyzer")){
+            analyzer_ -> start_analyzer();
+        }
+        
+
+    }
+
+    void background_esitmator_gui(){
+        ImGui::Text("Analyze background");
+
+        if(ImGui::Button("Start background estimator")){
+            analyzer_ -> start_background_est();
+        }
+
+    }
 
 public:
 
@@ -28,21 +52,19 @@ public:
     void gui() override {
         ImGui::Begin("Traffic Analyzer");
 
-        if(ImGui::Button("Start")){
-            analyzer_ -> start();
+        if(ImGui::Button("Reset Video Source")){
+            analyzer_ -> reset_source();
         }
-        
+
         ImGui::SameLine();
-        if(ImGui::Button("Stop")){
+        if(ImGui::Button("Stop Processing")){
             if(analyzer_ -> stop()){
                 ;
             };
         }
 
-        ImGui::SameLine();
-        if(ImGui::Button("Reset")){
-            analyzer_ -> reset();
-        }
+        traffic_analyzer_gui();
+        background_esitmator_gui();
 
         ImGui::End();
     }

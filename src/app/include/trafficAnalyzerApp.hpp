@@ -13,6 +13,7 @@
 #include "trafficAnalyzerWidget.hpp"
 #include "frameProviderWidget.hpp"
 #include "objectDetectorWidget.hpp"
+#include "backgroundEstimatorWidget.hpp"
 
 namespace Traffic{
 
@@ -38,7 +39,11 @@ public:
         
         gui_ -> add_widget(std::make_shared<FrameProviderWidget>(analyzer_ -> get_frame_provider()));
 
+        gui_ -> add_widget(std::make_shared<BackgroundEstimatorWidget>(analyzer_ -> get_background_estimator()));
+
         gui_ -> add_widget(std::make_shared<TrafficAnalyzerWidget>(analyzer_));
+
+        
     }
 
 

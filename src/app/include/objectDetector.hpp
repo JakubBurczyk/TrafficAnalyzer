@@ -2,7 +2,6 @@
 
 #include "detection.hpp"
 #include "inference.h"
-#include "frameProvider.hpp"
 
 namespace Traffic{
 

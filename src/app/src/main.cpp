@@ -19,7 +19,8 @@ int main() {
 
 		auto frames		= std::make_shared<FrameProvider>(std::string("./"));
 		auto detector 	= std::make_shared<ObjectDetector>();
-		auto analyzer 	= std::make_shared<TrafficAnalyzer>(frames, detector);
+		auto background = std::make_shared<BackgroundEstimator>();
+		auto analyzer 	= std::make_shared<TrafficAnalyzer>(frames, detector, background);
 
 		TrafficAnalyzerApp app("App", analyzer);
 		app.run();

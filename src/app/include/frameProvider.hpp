@@ -5,15 +5,18 @@
 #include <deque>
 #include <algorithm>
 #include <condition_variable>
-#include "utils.hpp"
-// #include "imageViewer.hpp"
 
-std::vector<std::string> IMAGE_FORMATS {"jpeg", "jpg", "png"};
+#include "utils.hpp"
+
+namespace Traffic{
+
+
 
 #define FP_DEBUG_NAME "FrameProvider | "
 
 class FrameProvider{
 private:
+    std::vector<std::string> IMAGE_FORMATS {"jpeg", "jpg", "png"};
     
     bool running_ = false;
     bool ready_ = false;
@@ -96,7 +99,6 @@ public:
     void reset(){
         stop();
         start();
-        
     }
 
     void stop(){
@@ -127,12 +129,13 @@ public:
             auto elapsed = now - last_frame_read_;
             last_frame_read_ = now;
             ms_since_last_frame_ = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-            
+            cv_frame_.notify_all();
         }
-        cv_frame_.notify_all();
         return !frame_.empty();
     }
 
     
     
 };
+
+} // namespace Traffic

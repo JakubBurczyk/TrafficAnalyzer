@@ -1,12 +1,14 @@
 #pragma once
 #include "imgui.h"
-#include "imfilebrowser.h"
 
 #include <GL/gl.h>
 
-#include "widget.hpp"
-#include "objectDetector.hpp"
 
+#include "imfilebrowser.h"
+#include "widget.hpp"
+#include "imageViewer.hpp"
+
+#include "objectDetector.hpp"
 
 namespace Traffic{
 
