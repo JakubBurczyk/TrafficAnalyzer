@@ -113,7 +113,7 @@ public:
 
     void set_file_types(){
         if(video_){
-            fileDialog -> SetTypeFilters({".mkv", ".mp4", ".avi"});
+            fileDialog -> SetTypeFilters({".mkv", ".mp4",".MP4", ".avi"});
         }
         else{
             fileDialog -> SetTypeFilters({".jpeg", ".jpg", ".png"});

@@ -10,12 +10,14 @@
 #include <opencv2/bgsegm.hpp>
 namespace Traffic{
 
-enum BGEstimatorType{
-    CNT,
-    GMG,
-    GSOC,
-    LSBP,
-    MOG,
+enum class BGEstimatorType : int32_t {
+    CNT = 1,
+    GMG = 2,
+    GSOC = 3,
+    LSBP = 4,
+    MOG = 5,
+    CUDA_MOG = 6,
+    CUDA_MOG2 = 7
 
 };
 
@@ -69,12 +71,13 @@ struct BGEstimatorMOGOptions{
 };
 
 struct BGEstimatorOptions{
-    BGEstimatorType type = BGEstimatorType::MOG;;
+    BGEstimatorType type = BGEstimatorType::MOG;
     BGEstimatorCNTOptions CNT;
     BGEstimatorGMGOptions GMG;
     BGEstimatorGSOCOptions GSOC;
     BGEstimatorLSBPOptions LSBP;
     BGEstimatorMOGOptions MOG;
+    bool CUDA = false;
 };
 
 
@@ -86,6 +89,9 @@ private:
 
     cv::Ptr<cv::BackgroundSubtractor> background_sub_;
     cv::Mat fg_mask_;
+    cv::cuda::GpuMat fg_mask_gpu_;
+    cv::cuda::GpuMat frame_gpu_;
+    cv::cuda::GpuMat bg_gpu_;
 
     std::condition_variable cv_update_;
     std::mutex mtx_notify_update_;
@@ -102,13 +108,26 @@ public:
 
 
     void update(cv::Mat &frame){
-        background_sub_ -> apply(frame, fg_mask_);
+        if(options_.CUDA){
+            frame_gpu_.upload(frame);
+            background_sub_ -> apply(frame_gpu_, fg_mask_gpu_);
+            fg_mask_ = cv::Mat(fg_mask_gpu_);
+        }else{
+            background_sub_ -> apply(frame, fg_mask_);
+        }
+        
         cv_update_.notify_all();
     }
 
     cv::Mat get_background(){
         cv::Mat bg;
-        background_sub_ -> getBackgroundImage(bg);
+        if(options_.CUDA){
+            background_sub_ -> getBackgroundImage(bg_gpu_);
+            bg = cv::Mat(bg_gpu_);
+        }else{
+            background_sub_ -> getBackgroundImage(bg);
+        }   
+        
         return bg;
     }
 
@@ -117,6 +136,7 @@ public:
     }
 
     void create_CNT(){
+        options_.CUDA = false;
         background_sub_ = cv::bgsegm::createBackgroundSubtractorCNT(    options_.CNT.minPixelStability,
                                                                         options_.CNT.useHistory,
                                                                         options_.CNT.maxPixelStability,
@@ -125,12 +145,14 @@ public:
     }
 
     void create_GMG(){
+        options_.CUDA = false;
         background_sub_ = cv::bgsegm::createBackgroundSubtractorGMG(    options_.GMG.initializationFrames,
                                                                         options_.GMG.decisionThreshold
                                                                     );
     }
 
     void create_GSOC(){
+        options_.CUDA = false;
         background_sub_ = cv::bgsegm::createBackgroundSubtractorGSOC(   options_.GSOC.mc,
                                                                         options_.GSOC.nSamples,
                                                                         options_.GSOC.replaceRate,
@@ -146,6 +168,7 @@ public:
     }
 
     void create_LSBP(){
+        options_.CUDA = false;
         background_sub_ = cv::bgsegm::createBackgroundSubtractorLSBP(   options_.LSBP.mc,
                                                                         options_.LSBP.nSamples,
                                                                         options_.LSBP.LSBPRadius,
@@ -163,11 +186,22 @@ public:
     }
 
     void create_MOG(){
+        options_.CUDA = false;
         background_sub_ = cv::bgsegm::createBackgroundSubtractorMOG(    options_.MOG.history,
                                                                         options_.MOG.nmixtures,
                                                                         options_.MOG.backgroundRatio,
                                                                         options_.MOG.noiseSigma  
                                                                     );
+    }
+
+    void create_CUDA_MOG(){
+        options_.CUDA = true;
+        background_sub_ = cv::cuda::createBackgroundSubtractorMOG();
+    }
+
+    void create_CUDA_MOG2(){
+        options_.CUDA = true;
+        background_sub_ = cv::cuda::createBackgroundSubtractorMOG2(2000);
     }
 
     bool init(){
@@ -192,6 +226,16 @@ public:
             }
             case BGEstimatorType::MOG:{
                 create_MOG();
+                break;
+            }
+
+            case BGEstimatorType::CUDA_MOG:{
+                create_CUDA_MOG();
+                break;
+            }
+
+            case BGEstimatorType::CUDA_MOG2:{
+                create_CUDA_MOG2();
                 break;
             }
 

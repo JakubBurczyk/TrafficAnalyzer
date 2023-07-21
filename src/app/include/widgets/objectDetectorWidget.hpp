@@ -60,7 +60,7 @@ public:
                 fileDialog -> Open();
         }
 
-        ImGui::Text("CUDA mode: %b", object_detector_ -> get_CUDA_mode());
+        ImGui::Text("CUDA mode: %i", object_detector_ -> get_CUDA_mode());
         ImGui::Text("Model path: %s", object_detector_ -> get_model_path().c_str());
 
         if( object_detector_ -> is_ready()){

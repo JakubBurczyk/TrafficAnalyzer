@@ -13,7 +13,6 @@ private:
     static std::mutex mtx_init_;
     static std::mutex mtx_show_;
 
-    bool show_controls_ = false;
     bool enabled_ = false;
 
     GLuint texture_;
@@ -45,9 +44,6 @@ public:
     bool is_enabled(){ return enabled_; }
 
     void toggle_enabled(){ enabled_ = !enabled_; }
-    void hide_controls(){ show_controls_ = false; }
-    void show_controls(){ show_controls_ = true; }
-    void toggle_controls(){ show_controls_ = !show_controls_; }
 
     void set_width_scale(double scale) { scale_w_ = scale; }
     void set_height_scale(double scale) { scale_h_ = scale; }
@@ -74,33 +70,22 @@ public:
 
     void show_image(cv::Mat &frame){
         
+        std::unique_lock<std::mutex>(ImageViewer::mtx_show_);
+        
+        if(ImGui::CollapsingHeader(("Image Controls" + name).c_str(), ImGuiTreeNodeFlags_None))
+        {
+            ImGui::SliderInt(("Width scale" + name).c_str(), &scale_w_, 1, 10);
+            ImGui::SliderInt(("Heightd scale" + name).c_str() , &scale_h_, 1, 10);
+        }
 
         if(!enabled_){
             ImGui::Text("Image preview disabled");
-            return;
-        }
-
-        if(frame.empty()){
+        }else if(frame.empty()){
             ImGui::Text("Image is empty");
-            return;
+        }else{
+            set_image(frame);
+            ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture_ ) ), ImVec2( width_, height_ ) );
         }
-
-        set_image(frame);
-
-        std::unique_lock<std::mutex>(ImageViewer::mtx_show_);
-        
-        if(ImGui::Button(("Toggle Image Controls" + name).c_str())){
-            toggle_controls();
-        }
-
-        if(show_controls_){
-            ImGui::SliderInt(("Width scale" + name).c_str(), &scale_w_, 1, 10);
-            ImGui::SliderInt(("Heightd scale" + name).c_str() , &scale_h_, 1, 10);
-        } 
-
-
-        ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture_ ) ), ImVec2( width_, height_ ) );
-        
     } 
 
 };
