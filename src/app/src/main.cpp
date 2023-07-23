@@ -18,9 +18,14 @@ int main() {
 		APP_PROFILE_SCOPE("Test scope");
 
 		auto frames		= std::make_shared<FrameProvider>(std::string("./"));
+		auto frame_prep = std::make_shared<FramePreprocessor>();
 		auto detector 	= std::make_shared<ObjectDetector>();
 		auto background = std::make_shared<BackgroundEstimator>();
-		auto analyzer 	= std::make_shared<TrafficAnalyzer>(frames, detector, background);
+		
+		auto analyzer 	= std::make_shared<TrafficAnalyzer>(frames,
+															frame_prep,
+															detector,
+															background);
 
 		TrafficAnalyzerApp app("App", analyzer);
 		app.run();

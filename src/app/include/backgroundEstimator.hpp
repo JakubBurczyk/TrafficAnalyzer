@@ -1,85 +1,18 @@
 #pragma once
 #include <string>
 #include <filesystem>
-#include <opencv2/opencv.hpp>
 #include <deque>
 #include <algorithm>
 #include <condition_variable>
+
+#include <opencv2/opencv.hpp>
 #include <opencv2/video/background_segm.hpp>
 #include <opencv2/cudabgsegm.hpp>
 #include <opencv2/bgsegm.hpp>
+
+#include "backgroundEstimator_data.hpp"
+
 namespace Traffic{
-
-enum class BGEstimatorType : int32_t {
-    CNT = 1,
-    GMG = 2,
-    GSOC = 3,
-    LSBP = 4,
-    MOG = 5,
-    CUDA_MOG = 6,
-    CUDA_MOG2 = 7
-
-};
-
-struct BGEstimatorCNTOptions{
-    int minPixelStability = 15;
-    bool useHistory = true;
-    int maxPixelStability = 15*60;
-    bool isParallel = true;
-};
-
-struct BGEstimatorGMGOptions{
-    int initializationFrames=120;
-    double decisionThreshold=0.8;
-};
-
-struct BGEstimatorGSOCOptions{
-    int mc = cv::bgsegm::LSBPCameraMotionCompensation::LSBP_CAMERA_MOTION_COMPENSATION_NONE;
-    int nSamples = 20;
-    float replaceRate = 0.003f;
-    float propagationRate = 0.01f;
-    int hitsThreshold = 32;
-    float alpha = 0.01f;
-    float beta = 0.0022f;
-    float blinkingSupressionDecay = 0.1f;
-    float blinkingSupressionMultiplier = 0.1f;
-    float noiseRemovalThresholdFacBG = 0.0004f;
-    float noiseRemovalThresholdFacFG = 0.0008f;
-};
-
-struct BGEstimatorLSBPOptions{
-    int mc = cv::bgsegm::LSBPCameraMotionCompensation::LSBP_CAMERA_MOTION_COMPENSATION_NONE;
-    int nSamples = 20;
-    int LSBPRadius = 16;
-    float Tlower = 2.0f;
-    float Tupper = 32.0f;
-    float Tinc = 1.0f;
-    float Tdec = 0.05f;
-    float Rscale = 10.0f;
-    float Rincdec = 0.005f;
-    float noiseRemovalThresholdFacBG = 0.0004f;
-    float noiseRemovalThresholdFacFG = 0.0008f;
-    int LSBPthreshold = 8;
-    int minCount = 2;
-};
-
-struct BGEstimatorMOGOptions{
-    int history=200;
-    int nmixtures=5;
-    double backgroundRatio=0.7;
-    double noiseSigma=0;
-};
-
-struct BGEstimatorOptions{
-    BGEstimatorType type = BGEstimatorType::MOG;
-    BGEstimatorCNTOptions CNT;
-    BGEstimatorGMGOptions GMG;
-    BGEstimatorGSOCOptions GSOC;
-    BGEstimatorLSBPOptions LSBP;
-    BGEstimatorMOGOptions MOG;
-    bool CUDA = false;
-};
-
 
 class BackgroundEstimator{
 private:
@@ -91,6 +24,8 @@ private:
     cv::Mat fg_mask_;
     cv::cuda::GpuMat fg_mask_gpu_;
     cv::cuda::GpuMat frame_gpu_;
+    cv::Mat frame_;
+
     cv::cuda::GpuMat bg_gpu_;
 
     std::condition_variable cv_update_;
@@ -106,12 +41,21 @@ public:
     std::mutex& get_mtx_update(){ return mtx_notify_update_; }
     BGEstimatorOptions &get_options_ref() { return options_; }
 
+    void save_mask(std::string filename){
+        cv::imwrite(filename, fg_mask_);
+    }
+
+    void save_frame(std::string filename){
+        cv::imwrite(filename, frame_);
+    }
 
     void update(cv::Mat &frame){
         if(options_.CUDA){
+            frame_ = frame.clone();
             frame_gpu_.upload(frame);
             background_sub_ -> apply(frame_gpu_, fg_mask_gpu_);
             fg_mask_ = cv::Mat(fg_mask_gpu_);
+            
         }else{
             background_sub_ -> apply(frame, fg_mask_);
         }

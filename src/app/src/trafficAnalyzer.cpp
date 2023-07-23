@@ -2,11 +2,13 @@
 
 namespace Traffic{
 
-TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider> frame_provider, 
+TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider> frame_provider,
+                                    std::shared_ptr<FramePreprocessor> frame_preprocessor,
                                     std::shared_ptr<ObjectDetector> detector,
                                     std::shared_ptr<BackgroundEstimator> background)
 :
     frame_provider_{frame_provider},
+    frame_preprocessor_{frame_preprocessor},
     detector_{detector},
     background_est_{background}
 {
@@ -149,6 +151,12 @@ bool TrafficAnalyzer::advance_frame()
         frame_ = frame_provider_ -> get_frame();
     }
     return result;
+}
+
+bool TrafficAnalyzer::mask_frame(){
+    frame_ = frame_preprocessor_ -> mask_frame(frame_);
+
+    return true;
 }
 
 

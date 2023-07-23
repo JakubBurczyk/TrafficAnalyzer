@@ -25,6 +25,8 @@ private:
     cv::Mat frame_bg_;
     cv::Mat frame_mask_;
     BGEstimatorOptions& options;
+    
+    std::shared_ptr<ImGui::FileBrowser> fileDialog;
 
 protected:
 
@@ -43,13 +45,67 @@ protected:
     }
 
     void gui_options_GSOC(){
-        static bool compensate_camera = false;
-        ImGui::Checkbox("Compensate camera", &compensate_camera);
-        if(compensate_camera){
+        static bool compensate_camera_GSOC = false;
+        ImGui::Checkbox("GSOC | Compensate camera", &compensate_camera_GSOC);
+        if(compensate_camera_GSOC){
             options.GSOC.mc = cv::bgsegm::LSBPCameraMotionCompensation::LSBP_CAMERA_MOTION_COMPENSATION_LK;
         }else{
             options.GSOC.mc = cv::bgsegm::LSBPCameraMotionCompensation::LSBP_CAMERA_MOTION_COMPENSATION_NONE;
         }
+
+        ImGui::InputInt("GSOC | n Samples", &options.GSOC.nSamples);
+        ImGui::InputInt("GSOC | Hits Threshold", &options.GSOC.hitsThreshold);
+        ImGui::InputFloat("GSOC | Replace Rate", &options.GSOC.replaceRate);
+        ImGui::InputFloat("GSOC | Propagation Rate", &options.GSOC.propagationRate);
+        ImGui::InputFloat("GSOC | Alpha", &options.GSOC.alpha);
+        ImGui::InputFloat("GSOC | Beta", &options.GSOC.beta);
+        ImGui::InputFloat("GSOC | Blinking Suppression Decay", &options.GSOC.blinkingSupressionDecay);
+        ImGui::InputFloat("GSOC | Blinking Suppression Multiplier", &options.GSOC.blinkingSupressionMultiplier);
+        ImGui::InputFloat("GSOC | Noise Removal Threshold BG", &options.GSOC.noiseRemovalThresholdFacBG);
+        ImGui::InputFloat("GSOC | Noise Removal Threshold FG", &options.GSOC.noiseRemovalThresholdFacFG); 
+    }
+
+    void gui_options_LSBP(){
+        static bool compensate_camera_LSBP = false;
+        ImGui::Checkbox("LSBP | Compensate camera", &compensate_camera_LSBP);
+        if(compensate_camera_LSBP){
+            options.GSOC.mc = cv::bgsegm::LSBPCameraMotionCompensation::LSBP_CAMERA_MOTION_COMPENSATION_LK;
+        }else{
+            options.GSOC.mc = cv::bgsegm::LSBPCameraMotionCompensation::LSBP_CAMERA_MOTION_COMPENSATION_NONE;
+        }
+
+        ImGui::InputInt("LSBP | n Samples", &options.LSBP.nSamples);
+        ImGui::InputInt("LSBP | Radius", &options.LSBP.LSBPRadius);
+        ImGui::InputInt("LSBP | Threshold", &options.LSBP.LSBPthreshold);
+        ImGui::InputInt("LSBP | Min Count", &options.LSBP.minCount);
+        ImGui::InputFloat("LSBP | Tlower", &options.LSBP.Tlower);
+        ImGui::InputFloat("LSBP | Tupper", &options.LSBP.Tupper);
+        ImGui::InputFloat("LSBP | Tinc", &options.LSBP.Tinc);
+        ImGui::InputFloat("LSBP | Tdec", &options.LSBP.Tdec); 
+        ImGui::InputFloat("LSBP | Rscale", &options.LSBP.Rscale);
+        ImGui::InputFloat("LSBP | Rincdec", &options.LSBP.Rincdec); 
+        ImGui::InputFloat("LSBP | Noise Removal Threshold BG", &options.LSBP.noiseRemovalThresholdFacBG);
+        ImGui::InputFloat("LSBP | Noise Removal Threshold FG", &options.LSBP.noiseRemovalThresholdFacFG); 
+    }
+
+    void gui_options_MOG(){
+        ImGui::InputInt("MOG | history", &options.MOG.history);
+        ImGui::InputInt("MOG | nMixtures", &options.MOG.nmixtures);
+        ImGui::InputDouble(" MOG | Background Ratio", &options.MOG.backgroundRatio);
+        ImGui::InputDouble(" MOG | Noise Sigma", &options.MOG.noiseSigma);
+    }
+
+    void gui_options_CUDA_MOG(){
+        ImGui::InputInt("CUDA MOG | history", &options.CUDA_MOG.history);
+        ImGui::InputInt("CUDA MOG | nMixtures", &options.CUDA_MOG.nmixtures);
+        ImGui::InputDouble(" CUDA MOG | Background Ratio", &options.CUDA_MOG.backgroundRatio);
+        ImGui::InputDouble(" CUDA MOG | Noise Sigma", &options.CUDA_MOG.noiseSigma);
+    }
+
+    void gui_options_CUDA_MOG_2(){
+        ImGui::Checkbox("CUDA MOG 2 | Detect Shadows", &options.CUDA_MOG_2.detectShadows);
+        ImGui::InputInt("CUDA MOG 2 | history", &options.CUDA_MOG_2.history);
+        ImGui::InputDouble(" CUDA MOG 2 | var Threshold", &options.CUDA_MOG_2.varThreshold);
     }
 
     void gui_switch_estimator(){
@@ -77,11 +133,13 @@ protected:
         {
             
             switch(options.type){
-                case BGEstimatorType::CNT:  { gui_options_CNT();    break; }
-                case BGEstimatorType::GMG:  { gui_options_GMG();    break; }
-                case BGEstimatorType::GSOC: { gui_options_GSOC();   break; }
-                case BGEstimatorType::LSBP: {break;}
-                case BGEstimatorType::MOG:  {break;}
+                case BGEstimatorType::CNT:      { gui_options_CNT();        break; }
+                case BGEstimatorType::GMG:      { gui_options_GMG();        break; }
+                case BGEstimatorType::GSOC:     { gui_options_GSOC();       break; }
+                case BGEstimatorType::LSBP:     { gui_options_LSBP();       break; }
+                case BGEstimatorType::MOG:      { gui_options_MOG();        break; }
+                case BGEstimatorType::CUDA_MOG: { gui_options_CUDA_MOG();   break; }
+                case BGEstimatorType::CUDA_MOG2:{ gui_options_CUDA_MOG_2(); break; }
                 default:{break;}
                 
             }
@@ -142,6 +200,21 @@ public:
             image_viewer_mask_ -> toggle_enabled();
         }
 
+        if(ImGui::Button("Select Save Directory")){
+            fileDialog = std::make_shared<ImGui::FileBrowser>(ImGuiFileBrowserFlags_::ImGuiFileBrowserFlags_SelectDirectory);
+            fileDialog -> Open();
+        }
+
+        static std::string results_path = "./";
+        static char results_filename[512] = "bg_est_result";
+        ImGui::InputTextWithHint("Filename", "filename",results_filename,512);
+        ImGui::SameLine();
+
+        if(ImGui::Button("Save Estimator Results")){
+            background_est_ -> save_mask(results_path + "/" + results_filename + "_mask.png");
+            background_est_ -> save_frame(results_path + "/" + results_filename + "_frame.png");
+        }
+
         gui_switch_estimator();
         gui_show_estirmator_options();
 
@@ -151,6 +224,17 @@ public:
         ImGui::EndChild();
 
         ImGui::End();
+
+        if(fileDialog){
+    
+            fileDialog -> Display();
+            if(fileDialog -> HasSelected())
+            {
+                results_path = fileDialog -> GetSelected().string();
+
+                fileDialog -> ClearSelected();
+            }
+        }
     }
 
 };

@@ -8,6 +8,7 @@ set(INCLUDE_DIRS
   include
   include/interfaces
   include/widgets
+  include/data_structures
   include/GL
   include/KHR
 )

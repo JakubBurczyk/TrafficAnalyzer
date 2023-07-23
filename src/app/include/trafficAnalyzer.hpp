@@ -11,6 +11,7 @@
 #include "frameProvider.hpp"
 #include "objectDetector.hpp"
 #include "backgroundEstimator.hpp"
+#include "framePreprocessor.hpp"
 
 namespace Traffic{
 
@@ -26,6 +27,7 @@ private:
 
     std::shared_ptr<ObjectDetector> detector_;
     std::shared_ptr<FrameProvider> frame_provider_;
+    std::shared_ptr<FramePreprocessor> frame_preprocessor_;
     std::shared_ptr<BackgroundEstimator> background_est_;
 
     cv::Mat frame_;
@@ -48,12 +50,14 @@ protected:
 
     bool run_detector(bool run);
     bool run_background_est(bool run);
+    bool mask_frame();
     bool advance_frame();
-
+     
     bool update_analyzer(){
         bool result = false;
 
         result = advance_frame();
+        result = mask_frame();
         result = run_detector(result);
 
         return result;
@@ -74,13 +78,15 @@ protected:
 
 public:
 
-    TrafficAnalyzer(std::shared_ptr<FrameProvider> frame_provider, 
-                    std::shared_ptr<ObjectDetector> detector,
-                    std::shared_ptr<BackgroundEstimator> background);
+    TrafficAnalyzer(std::shared_ptr<FrameProvider>          frame_provider, 
+                    std::shared_ptr<FramePreprocessor>      frame_preprocessor,
+                    std::shared_ptr<ObjectDetector>         detector,
+                    std::shared_ptr<BackgroundEstimator>    background);
 
-    std::shared_ptr<FrameProvider> get_frame_provider(){ return frame_provider_; }
-    std::shared_ptr<ObjectDetector> get_object_detector(){ return detector_; }
-    std::shared_ptr<BackgroundEstimator> get_background_estimator(){ return background_est_; }
+    std::shared_ptr<FrameProvider>          get_frame_provider()        { return frame_provider_;       }
+    std::shared_ptr<FramePreprocessor>      get_frame_preprocessor()    { return frame_preprocessor_;   }
+    std::shared_ptr<ObjectDetector>         get_object_detector()       { return detector_;             }
+    std::shared_ptr<BackgroundEstimator>    get_background_estimator()  { return background_est_;       }
 
     bool is_running();
 
