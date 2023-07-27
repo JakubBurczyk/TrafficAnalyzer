@@ -27,13 +27,6 @@ public:
             iou = (double)intersection_area / (double)union_area;
         }
         
-        // std::cout << "width: "<< width << std::endl;
-        // std::cout << "height: "<< height << std::endl;
-        // std::cout << "Intersection width: "<< intersection_width << std::endl;
-        // std::cout << "Intersection height: "<< intersection_height << std::endl;
-        // std::cout << "Intersection area: "<< intersection_area << std::endl;
-        // std::cout << "Union area: "<< union_area << std::endl;
-        // std::cout << "IOU: "<< iou << std::endl;
         return iou;
     }
 

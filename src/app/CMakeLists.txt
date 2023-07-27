@@ -24,6 +24,8 @@ set(PROJECT_SOURCES
     src/gl3w.c
     src/imageViewer.cpp
     src/trafficAnalyzer.cpp
+    src/Hungarian.cpp
+    src/tracker.cpp
 )
 
 add_executable(${NAME} ${MAIN_FILE} ${PROJECT_SOURCES})
