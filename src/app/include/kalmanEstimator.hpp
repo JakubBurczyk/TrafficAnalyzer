@@ -4,35 +4,24 @@
 #include <opencv2/video/tracking.hpp>
 
 #include "iou.hpp"
-#include "Hungarian.h"
-
-/*
-
-	vector< vector<double> > costMatrix = { {1,2},{2,1},{0,3} };
-
-	HungarianAlgorithm HungAlgo;
-	vector<int> assignment;
-
-	double cost = HungAlgo.Solve(costMatrix, assignment);
-
-	for (unsigned int x = 0; x < costMatrix.size(); x++)
-		std::cout << x << ", assigned job:" << assignment[x] << "\t";
-
-	std::cout << "\ncost: " << cost << std::endl;
-
-*/
 
 namespace Traffic{
 
-struct TrackerOptions{
-    uint32_t fps = 30;
-    float measurement_error = 1;
+struct Measurement{
+    float x = 0;
+    float y = 0;
 };
 
-class Tracker{
+struct KalmanOptions{
+    uint32_t fps = 30;
+    float measurement_error = 1;
+    Measurement inititial_detection;
+};
+
+class KalmanEstimator{
 private:
 
-    TrackerOptions options_;
+    KalmanOptions options_;
     float dt_ = 0;
     
     cv::KalmanFilter kalman_;
@@ -41,9 +30,10 @@ protected:
 
     static cv::Mat prepare_transition_matrix(float dt);
     static cv::Mat prepare_control_matrix(float dt);
-    static cv::Mat prepare_measurement_matrix();
+    static cv::Mat prepare_measurement_matrix(Measurement m);
     static cv::Mat prepare_measurement_error_matrix(float x_variance, float y_variance);
     static cv::Mat prepare_process_covariance_matrix(float dt);
+
 
     void init_kalman_();
 
@@ -51,14 +41,27 @@ protected:
         dt_ = 1.0f/(float)fps;
     }
 
+    Measurement get_corrected_measurement(){
+        Measurement result;
+        result.x = kalman_.statePost.at<float>(0,0);
+        result.y = kalman_.statePost.at<float>(1,1);
+        return result;
+    }
+
 public:
 
-    Tracker(TrackerOptions options)
+    KalmanEstimator(KalmanOptions options)
     :
         options_{options}
     {
         set_dt(options_.fps);
         init_kalman_();
+
+    }
+
+    void update(Measurement m){
+        kalman_.predict();
+        kalman_.correct(prepare_measurement_matrix(m));
     }
     
 };

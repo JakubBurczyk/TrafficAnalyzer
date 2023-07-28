@@ -20,8 +20,6 @@ public:
         int intersection_area = intersection_width * intersection_height;
         int union_area = r1.area() + r2.area() - intersection_area;
 
-        
-
         if(intersection_width > 0 && intersection_height >0)
         {
             iou = (double)intersection_area / (double)union_area;

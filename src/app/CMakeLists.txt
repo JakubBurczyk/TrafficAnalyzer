@@ -25,7 +25,8 @@ set(PROJECT_SOURCES
     src/imageViewer.cpp
     src/trafficAnalyzer.cpp
     src/Hungarian.cpp
-    src/tracker.cpp
+    src/kalmanEstimator.cpp
+    src/tracklet.cpp
 )
 
 add_executable(${NAME} ${MAIN_FILE} ${PROJECT_SOURCES})

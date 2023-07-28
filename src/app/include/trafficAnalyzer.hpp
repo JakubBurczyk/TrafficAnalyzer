@@ -12,7 +12,7 @@
 #include "objectDetector.hpp"
 #include "backgroundEstimator.hpp"
 #include "framePreprocessor.hpp"
-#include "tracker.hpp"
+#include "trafficTracker.hpp"
 
 namespace Traffic{
 
