@@ -26,6 +26,12 @@ cv::Mat KalmanEstimator::prepare_measurement_matrix(Measurement m){
 
     return cv::Mat(2,4, CV_32FC1, measurement_matrix_vectorized);
 }
+cv::Mat KalmanEstimator::prepare_measurement(Measurement m){
+    float measurement_vectorized[2][1] = {  {m.x},
+                                            {m.y} };
+
+    return cv::Mat(2,1, CV_32FC1, measurement_vectorized);
+}
 
 cv::Mat KalmanEstimator::prepare_measurement_error_matrix(float x_variance, float y_variance){
     float measurement_error_matrix_vectorized[2][2] = { {x_variance, 0},
@@ -54,8 +60,8 @@ void KalmanEstimator::init_kalman_(){
     kalman_.measurementMatrix = prepare_measurement_matrix(Measurement({1, 1}));
     kalman_.measurementNoiseCov = prepare_measurement_error_matrix(options_.measurement_error, options_.measurement_error);
     kalman_.processNoiseCov = prepare_process_covariance_matrix(dt_);
-    kalman_.statePre = prepare_measurement_matrix(options_.inititial_detection);
-    kalman_.statePost = prepare_measurement_matrix(options_.inititial_detection);
+    // kalman_.statePre = prepare_measurement_matrix(options_.inititial_measurement);
+    // kalman_.statePost = prepare_measurement_matrix(options_.inititial_measurement);
 }
 
 } // namespace Traffic

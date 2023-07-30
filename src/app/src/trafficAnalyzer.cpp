@@ -2,15 +2,17 @@
 
 namespace Traffic{
 
-TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider> frame_provider,
-                                    std::shared_ptr<FramePreprocessor> frame_preprocessor,
-                                    std::shared_ptr<ObjectDetector> detector,
-                                    std::shared_ptr<BackgroundEstimator> background)
+TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider>          frame_provider,
+                                    std::shared_ptr<FramePreprocessor>      frame_preprocessor,
+                                    std::shared_ptr<ObjectDetector>         detector,
+                                    std::shared_ptr<BackgroundEstimator>    background,
+                                    std::shared_ptr<TrafficTracker>         tracker)
 :
     frame_provider_{frame_provider},
     frame_preprocessor_{frame_preprocessor},
     detector_{detector},
-    background_est_{background}
+    background_est_{background},
+    tracker_{tracker}
 {
 
 }
@@ -132,6 +134,16 @@ bool TrafficAnalyzer::run_detector(bool run)
 
     return result;
 }
+
+bool TrafficAnalyzer::update_tracker(){
+
+    bool result = false;
+
+    tracker_ -> update(detector_ -> get_detections(), frame_);
+
+    return result;
+}
+
 
 bool TrafficAnalyzer::run_background_est(bool run)
 {

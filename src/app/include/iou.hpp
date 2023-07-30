@@ -1,12 +1,13 @@
 #pragma once
 #include <cstdlib>
 #include <opencv2/opencv.hpp>
+#include <algorithm>
 
 class IoU{
 
 public:
     static double calculate_iou(const cv::Rect &r1, const cv::Rect &r2){
-        double iou = -1;
+        double iou = 1;
 
         int x = std::abs(r1.x - r2.x);
         int y = std::abs(r1.y - r2.y);
@@ -22,7 +23,7 @@ public:
 
         if(intersection_width > 0 && intersection_height >0)
         {
-            iou = (double)intersection_area / (double)union_area;
+            iou =  std::max(1 - (double)intersection_area / (double)union_area, 0.0);
         }
         
         return iou;

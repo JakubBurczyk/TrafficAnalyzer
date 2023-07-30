@@ -30,6 +30,7 @@ private:
     std::shared_ptr<FrameProvider> frame_provider_;
     std::shared_ptr<FramePreprocessor> frame_preprocessor_;
     std::shared_ptr<BackgroundEstimator> background_est_;
+    std::shared_ptr<TrafficTracker> tracker_;
 
     cv::Mat frame_;
 
@@ -53,14 +54,15 @@ protected:
     bool run_background_est(bool run);
     bool mask_frame();
     bool advance_frame();
-     
+    bool update_tracker();
+
     bool update_analyzer(){
         bool result = false;
 
         result = advance_frame();
         result = mask_frame();
         result = run_detector(result);
-
+        result = update_tracker();
         return result;
     }
 
@@ -82,13 +84,15 @@ public:
     TrafficAnalyzer(std::shared_ptr<FrameProvider>          frame_provider, 
                     std::shared_ptr<FramePreprocessor>      frame_preprocessor,
                     std::shared_ptr<ObjectDetector>         detector,
-                    std::shared_ptr<BackgroundEstimator>    background);
+                    std::shared_ptr<BackgroundEstimator>    background,
+                    std::shared_ptr<TrafficTracker>         tracker);
 
     std::shared_ptr<FrameProvider>          get_frame_provider()        { return frame_provider_;       }
     std::shared_ptr<FramePreprocessor>      get_frame_preprocessor()    { return frame_preprocessor_;   }
     std::shared_ptr<ObjectDetector>         get_object_detector()       { return detector_;             }
     std::shared_ptr<BackgroundEstimator>    get_background_estimator()  { return background_est_;       }
-
+    std::shared_ptr<TrafficTracker>         get_traffic_tracker()       { return tracker_;              }
+    
     bool is_running();
 
     bool start_analyzer();
