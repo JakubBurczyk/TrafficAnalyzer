@@ -74,8 +74,6 @@ public:
         
         if(!enabled_){
             ImGui::Text("Image preview disabled");
-        }else if(frame.empty()){
-            ImGui::Text("Image is empty");
         }else{
             if(ImGui::CollapsingHeader(("Image Controls" + name).c_str(), ImGuiTreeNodeFlags_None))
             {
@@ -83,9 +81,16 @@ public:
                 ImGui::SliderInt(("Heightd scale" + name).c_str() , &scale_h_, 1, 10);
             }
 
-            set_image(frame);
-            ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture_ ) ), ImVec2( width_, height_ ) );
+            if(frame.empty()){
+                ImGui::Text("Image is empty");
+            }else{
+                set_image(frame);
+                ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture_ ) ), ImVec2( width_, height_ ) );
+            }
         }
+
+            
+        
     } 
 
 };

@@ -62,9 +62,16 @@ public:
 
     cv::Mat visualize(){
         cv::Mat visualization_frame = frame_.clone();
+        cv::Scalar color = cv::Scalar(0,0,255);
         for(auto &detection : detections_){
             cv::Rect box = detection.box;
-            cv::Scalar color = cv::Scalar(0,0,255);
+            double font_scale = 0.5;
+            std::string s = "x: " + std::to_string(box.x) + ", y: " + std::to_string(box.y);
+            cv::Size textSize = cv::getTextSize(s, cv::FONT_HERSHEY_DUPLEX, font_scale, 1, 0);
+            cv::Rect textBox(box.x, box.y, textSize.width, textSize.height);
+
+            cv::rectangle(visualization_frame, textBox, color, cv::FILLED);
+            cv::putText(visualization_frame, s, cv::Point(box.x, box.y + textSize.height), cv::FONT_HERSHEY_DUPLEX, font_scale, cv::Scalar(0, 0, 0), 1, 0);
 
             cv::rectangle(visualization_frame, box, color, 2);
         }

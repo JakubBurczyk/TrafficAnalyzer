@@ -50,6 +50,10 @@ public:
     void gui() override {
         ImGui::Begin("Object Tracker");
 
+        if(ImGui::Button("Reset")){
+            tracker_ -> reset();
+        }
+
         if(ImGui::Button("Preview")){
             image_viewer_ -> toggle_enabled();
         }

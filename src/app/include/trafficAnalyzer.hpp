@@ -63,6 +63,7 @@ protected:
         result = mask_frame();
         result = run_detector(result);
         result = update_tracker();
+        // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         return result;
     }
 

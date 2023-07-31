@@ -13,7 +13,7 @@ struct Measurement{
 };
 
 struct KalmanOptions{
-    uint32_t fps = 30;
+    uint32_t fps = 60;
     float measurement_error = 1;
     Measurement inititial_measurement;
 };
@@ -24,7 +24,7 @@ private:
     KalmanOptions options_;
     float dt_ = 0;
     
-    cv::KalmanFilter kalman_ = cv::KalmanFilter(4, 2, 4);
+    cv::KalmanFilter kalman_;
 
     uint32_t pure_prediction_coutner = 0;
 
@@ -36,6 +36,8 @@ protected:
     static cv::Mat prepare_measurement_error_matrix(float x_variance, float y_variance);
     static cv::Mat prepare_process_covariance_matrix(float dt);
     static cv::Mat prepare_measurement(Measurement m);
+    static cv::Mat prepare_measurement(Measurement m, Measurement initial_state);
+    static cv::Mat prepare_state(Measurement m);
 
     void init_kalman_();
 
@@ -70,20 +72,30 @@ public:
 
     uint32_t get_prediction_counter(){ return pure_prediction_coutner; }
 
-    void update(Measurement m){        
+    void update(Measurement m){   
         predict();
         if(m.x < 0 || m.y < 0) { return; }
-        // std::cout << "KALMAN CORRECTION STEP\n"; 
-        kalman_.correct(prepare_measurement(m));
+
+        // cv::Mat measurement_matrix = prepare_measurement(m,options_.inititial_measurement);
+        cv::Mat measurement_matrix = cv::Mat(2,1,CV_32F,0.0);
+        measurement_matrix.at<float>(0,0) = m.x;
+        measurement_matrix.at<float>(1,0) = m.y;
+        auto correction = kalman_.correct(measurement_matrix);
+        
+        // std::cout << "-----------------------------------------------------\n";
+        // std::cout << "Kalman CORRECTION = \n " << correction << "\n";
+        // std::cout << "-----------------------------------------------------\n";
+        // std::cout << "Kalman PRE = \n " << kalman_.statePre << "\n";
+        // std::cout << "-----------------------------------------------------\n";
+        // std::cout << "Kalman POST = \n " << kalman_.statePost << "\n\n";
         reset_prediction_counter();
     }
 
     Measurement get_corrected_measurement(){
-        // std::cout << "GETTING CORRECTED MEASUREMENT\n"; 
+
         Measurement result;
         result.x = kalman_.statePost.at<float>(0,0);
-        result.y = kalman_.statePost.at<float>(1,1);
-        // std::cout << "GOT CORRECTED MEASUREMENT\n"; 
+        result.y = kalman_.statePost.at<float>(1,0);
         return result;
     }
     

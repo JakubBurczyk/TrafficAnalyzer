@@ -46,6 +46,9 @@ protected:
 
 	std::vector<int> calculate_assignments(const std::vector<Detection> &detections){
 		std::vector<std::vector<double>> iou_matrix;
+		std::vector<int> assignments;
+
+		if(detections.empty()){ return assignments; }
 
 		for(auto const &detection : detections){
 			std::vector<double> iou_row;
@@ -57,14 +60,14 @@ protected:
 
 			iou_matrix.push_back(iou_row);
 		}
-		std::cout << "MATRIX: {\n";
-		for ( const auto &row : iou_matrix )
-		{
-			for ( const auto &s : row ) std::cout << s << ' ';
-			std::cout << std::endl;
-		}
-		std::cout << "};\n";
-		std::vector<int> assignments;
+		// std::cout << "MATRIX: {\n";
+		// for ( const auto &row : iou_matrix )
+		// {
+		// 	for ( const auto &s : row ) std::cout << s << ' ';
+		// 	std::cout << std::endl;
+		// }
+		// std::cout << "};\n";
+		
 		HungAlgo_.Solve(iou_matrix, assignments);
 		return assignments;
 	}
@@ -85,11 +88,11 @@ protected:
 			}else{
 				KalmanOptions options;
 				options.fps = 60;
-				options.inititial_measurement.x = detection.box.x;
-				options.inititial_measurement.y = detection.box.y;
+				options.inititial_measurement.x = (float)detection.box.x;
+				options.inititial_measurement.y = (float)detection.box.y;
 				auto new_tracklet = std::make_shared<Tracklet>(options, detection);
 				tracklets_.push_back(new_tracklet);
-				std::cout << "Creating new tracker: " << new_tracklet -> get_id() << " with detecion no: " << detection_idx << std::endl;
+				std::cout << "Created new tracker: " << new_tracklet -> get_id() << " with detecion no: " << detection_idx << std::endl;
 			}
 		}
 
@@ -98,7 +101,10 @@ protected:
 				std::cout << "Allowing tracklet: " << tracklet -> get_id() << " to be updated " << std::endl;
 				tracklet -> allow_updates();
 			}else{
-				tracklet -> update(update_map[tracklet -> get_id()]);
+				auto &detection = update_map[tracklet -> get_id()];
+				
+
+				tracklet -> update(detection);
 				if(tracklet -> should_terminate()){
 					std::cout << "Destroying tracklet: " << tracklet -> get_id() << std::endl;
 					remove_tracklet(tracklet -> get_id());
@@ -127,6 +133,11 @@ public:
 
 	std::vector<std::shared_ptr<Tracklet>> get_tracklets(){
 		return tracklets_;
+	}
+
+	void reset(){
+		tracklets_ = std::vector<std::shared_ptr<Tracklet>>();
+		Tracklet::reset_ids();
 	}
 
 	cv::Mat visualize_tracklets(){

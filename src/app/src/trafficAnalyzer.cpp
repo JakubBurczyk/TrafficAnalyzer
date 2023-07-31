@@ -139,6 +139,7 @@ bool TrafficAnalyzer::update_tracker(){
 
     bool result = false;
 
+    frame_ = detector_ -> visualize();
     tracker_ -> update(detector_ -> get_detections(), frame_);
 
     return result;

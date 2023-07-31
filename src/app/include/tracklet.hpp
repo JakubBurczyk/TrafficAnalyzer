@@ -17,9 +17,10 @@ private:
 	// Detection previous_detection_;
 
     std::unique_ptr<KalmanEstimator> kalman_;
+	KalmanOptions options_;
 
 	bool allowed_updates_ = false;
-
+	
 
 protected:
 	void assign_id(){
@@ -30,14 +31,21 @@ protected:
 
 public:
 	Tracklet(KalmanOptions options, Detection detection)
+	:
+		options_{options}
 	{
 		// previous_detection_ = detection;
-		options.inititial_measurement.x = detection.box.x;
-		options.inititial_measurement.y = detection.box.y;
+		options_.inititial_measurement.x = (float)detection.box.x;
+		options_.inititial_measurement.y = (float)detection.box.y;
 		current_detection_ = detection;
 
-		kalman_ = std::make_unique<KalmanEstimator>(options);
+		kalman_ = std::make_unique<KalmanEstimator>(options_);
 		assign_id();
+	}
+
+	static void reset_ids(){
+		std::unique_lock<std::mutex> lock(mtx_id_);
+		lowest_id_ = 0;
 	}
 
 	uint64_t get_id(){ return id_; }
@@ -54,6 +62,7 @@ public:
 	void allow_updates(){
 		allowed_updates_ = true;
 	}
+	
 
 	cv::Point2d get_center(){
 		cv::Point2d center;
@@ -66,28 +75,51 @@ public:
 		// previous_detection_ = current_detection_;
 		current_detection_ = detection;
 
-		measurement_.x = current_detection_.box.x;
-		measurement_.y = current_detection_.box.y;
+		measurement_.x = (float)current_detection_.box.x;
+		measurement_.y = (float)current_detection_.box.y;
+		
+		// std::cout 	<< "Updating tracker " << id_
+		// 			<< " located | x = " << kalman_ -> get_corrected_measurement().x
+		// 			<< " | y = " << kalman_ -> get_corrected_measurement().y
+		// 			<< " | with detection at | x = " << measurement_.x
+		// 			<< " | y = " << measurement_.y 
+		// 			<< std::endl;
 
 		kalman_ -> update(measurement_);
 
 		Measurement corrected = kalman_ -> get_corrected_measurement();
 
+		// std::cout 	<< "Updated tracker " << id_
+		// 			<< " corrected to | x = " << corrected.x
+		// 			<< " | y = " << corrected.y
+		// 			<< std::endl;
+
 		current_detection_.box.x = corrected.x;
 		current_detection_.box.y = corrected.y;
+
+		// std::cout << "\n###############################\n\n";
 	}
 
 	void visualize(cv::Mat &output_frame){
 
+		Measurement m = kalman_ -> get_corrected_measurement();
 		auto box = current_detection_.box;
-		cv::Scalar color = cv::Scalar(100,255,0);
+		box.x = m.x;
+		box.y = m.y;
 
+		// std::cout 	<< "Visualizing tracker " << id_
+		// 			<< " located | x = " << get_updated_detecton().box.x
+		// 			<< " | y = " << get_updated_detecton().box.y
+		// 			<< std::endl;
+
+		cv::Scalar color = cv::Scalar(100,255,0);
+		double font_scale = 0.75;
 		std::string s = "T:" + std::to_string(id_);
-		cv::Size textSize = cv::getTextSize(s, cv::FONT_HERSHEY_DUPLEX, 1, 2, 0);
-		cv::Rect textBox(box.x, box.y - 40, textSize.width + 10, textSize.height + 20);
+		cv::Size textSize = cv::getTextSize(s, cv::FONT_HERSHEY_DUPLEX, font_scale, 1, 0);
+		cv::Rect textBox(box.x, box.y - textSize.height, textSize.width, textSize.height);
 
 		cv::rectangle(output_frame, textBox, color, cv::FILLED);
-		cv::putText(output_frame, s, cv::Point(box.x + 5, box.y - 10), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0, 0, 0), 2, 0);
+		cv::putText(output_frame, s, cv::Point(box.x, box.y), cv::FONT_HERSHEY_DUPLEX, font_scale, cv::Scalar(0, 0, 0), 1, 0);
 
 		cv::rectangle(output_frame, box, color);
 	}
