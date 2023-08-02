@@ -15,5 +15,5 @@ struct Detection
     std::string className{};
     float confidence{0.0};
     cv::Scalar color{};
-    cv::Rect box{};
+    cv::Rect box{-1,-1, 0, 0};
 };

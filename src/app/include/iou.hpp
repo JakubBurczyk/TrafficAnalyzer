@@ -25,10 +25,6 @@ public:
         {
             iou =  std::max(1 - (double)intersection_area / (double)union_area, 0.0);
         }
-
-        if(iou > 0.5){
-            iou = 1;
-        }
         
         return iou;
     }

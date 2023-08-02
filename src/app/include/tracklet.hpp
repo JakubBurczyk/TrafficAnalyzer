@@ -43,6 +43,10 @@ public:
 		assign_id();
 	}
 
+	~Tracklet(){
+		kalman_.reset();
+	}
+
 	static void reset_ids(){
 		std::unique_lock<std::mutex> lock(mtx_id_);
 		lowest_id_ = 0;

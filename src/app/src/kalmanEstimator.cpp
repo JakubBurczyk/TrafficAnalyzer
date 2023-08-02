@@ -46,13 +46,12 @@ cv::Mat KalmanEstimator::prepare_measurement(Measurement m, Measurement initial_
 
 cv::Mat KalmanEstimator::prepare_state(Measurement m){
 
-    std::cout << "initial m = "<< m.x << std::endl;
+
     float state_matrix_vectorized[4][1] = {     {2137.0f    },
                                                 {4488.0f    },
                                                 {0.0f   },  
                                                 {0.0f   } };
     cv::Mat prepared = cv::Mat(4,1, CV_16F, state_matrix_vectorized);
-    std::cout << "INITIALIZING STATE TO  = \n " << prepared << "\n\n";
     return prepared;
 }
 
@@ -81,15 +80,8 @@ cv::Mat KalmanEstimator::prepare_process_covariance_matrix(float dt){
 
 
 void KalmanEstimator::init_kalman_(){
-    std::cout << "Initializing Kalman Filter\n";
+
     kalman_.init(4,2,0, CV_32F);
-    // kalman_.transitionMatrix = prepare_transition_matrix(dt_);
-    // kalman_.controlMatrix = prepare_control_matrix(dt_);
-    // kalman_.measurementMatrix = prepare_measurement_matrix(Measurement({1.0f, 1.0f}));
-    // kalman_.measurementNoiseCov = prepare_measurement_error_matrix(options_.measurement_error, options_.measurement_error);
-    // kalman_.processNoiseCov = prepare_process_covariance_matrix(dt_);
-    // kalman_.statePre = prepare_state(options_.inititial_measurement);
-    // kalman_.statePost = prepare_state(options_.inititial_measurement);
 
     kalman_.transitionMatrix.at<float>(0,0) = 1.0f;
     kalman_.transitionMatrix.at<float>(1,1) = 1.0f;
@@ -104,9 +96,9 @@ void KalmanEstimator::init_kalman_(){
     kalman_.statePre.at<float>(0,0) = options_.inititial_measurement.x;
     kalman_.statePre.at<float>(1,0) = options_.inititial_measurement.y;
 
-    // std::cout << "INITIALIZED PREDICTION TO:\n" << kalman_.statePre << "\n------------------\n";
-    // std::cout << "INITIALIZED TRANSITION TO:\n" << kalman_.transitionMatrix << "\n------------------\n";
-    // std::cout << "INITIALIZED MEASUREMENT TO:\n" << kalman_.measurementMatrix << "\n------------------\n";
+    kalman_.statePost.at<float>(0,0) = options_.inititial_measurement.x;
+    kalman_.statePost.at<float>(1,0) = options_.inititial_measurement.y;
+
 }
 
 } // namespace Traffic

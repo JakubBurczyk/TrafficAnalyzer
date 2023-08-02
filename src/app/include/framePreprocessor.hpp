@@ -70,4 +70,8 @@ public:
         return masked_frame_;
     }
 
+    void remove_mask(){
+        frame_mask_ = cv::Mat();
+    }
+
 };

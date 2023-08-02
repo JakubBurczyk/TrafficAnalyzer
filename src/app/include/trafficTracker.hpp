@@ -2,7 +2,7 @@
 
 #include "tracklet.hpp"
 #include "Hungarian.h"
-
+#include "hungarian_data.hpp"
 /*
 
 	vector< vector<double> > costMatrix = { {1,2},{2,1},{0,3} };
@@ -33,22 +33,33 @@ private:
 protected:
 
 	void remove_tracklet(uint64_t id){
-		int idx = 0;
-		for(auto const& tracklet : tracklets_){
-			if(tracklet -> get_id() == id){
-				tracklets_.erase(tracklets_.begin() + idx);
+
+		for(int i = 0; i< tracklets_.size(); i++){
+			if(tracklets_[i].get() == nullptr){
+				continue;
+			}
+
+			if(tracklets_[i]-> get_id() == id){
+				std::cout << "trying to delete " << id << "size: " << tracklets_.size() << std::endl;
+				tracklets_[i].reset();
+				std::cout << "reset the pointer" << std::endl;
+				tracklets_.erase(tracklets_.begin() + i);
+				i--;
 				break;
 			}
-			idx++;
+
 		}
 	}
 
 
-	std::vector<int> calculate_assignments(const std::vector<Detection> &detections){
-		std::vector<std::vector<double>> iou_matrix;
-		std::vector<int> assignments;
+	HungarianData calculate_assignments(const std::vector<Detection> &detections){
 
-		if(detections.empty()){ return assignments; }
+		HungarianData hungarian_data;
+		auto& iou_matrix = hungarian_data.iou_matrix;
+		auto& assignments = hungarian_data.assignments;
+		auto& costs = hungarian_data.costs;
+
+		if(detections.empty()){ return hungarian_data; }
 
 		for(auto const &detection : detections){
 			std::vector<double> iou_row;
@@ -63,28 +74,51 @@ protected:
 		// std::cout << "MATRIX: {\n";
 		// for ( const auto &row : iou_matrix )
 		// {
-		// 	for ( const auto &s : row ) std::cout << s << ' ';
-		// 	std::cout << std::endl;
+			// for ( const auto &s : row ) std::cout << s << ' ';
+			// std::cout << std::endl;
 		// }
 		// std::cout << "};\n";
 		
 		HungAlgo_.Solve(iou_matrix, assignments);
-		return assignments;
+		// std::cout << "Assignments |\n";
+
+		for (unsigned int x = 0; x < assignments.size(); x++){
+			// std::cout << "Detection " << x << ", assigned tracker: " << assignments[x];
+			float iou = -1;
+			if( assignments[x] >= 0){
+				iou = iou_matrix[x][assignments[x]];
+				
+			}
+			// std::cout << ", IoU = " << iou << " | pos: | " << detections[x].box.x << " ; " << detections[x].box.y;
+			// std::cout << std::endl;
+			costs.push_back(iou);
+		}
+
+		for (unsigned int x = 0; x < costs.size(); x++){
+			// std::cout << "Detection " << x << ", cost : " << costs[x] << std::endl;
+		}
+
+		return hungarian_data;
 	}
 
-	void update_tracklets(const std::vector<int> &assignments, const std::vector<Detection> &detections){
+	void update_tracklets(HungarianData hungarian_data, const std::vector<Detection> &detections){
 		std::map<uint32_t, Detection> update_map;
-
+		auto &assignments = hungarian_data.assignments;
+		auto &costs = hungarian_data.costs;
+		
 		for (unsigned int detection_idx = 0; detection_idx < assignments.size(); detection_idx++){
 			int tracker_idx = assignments[detection_idx];
 			auto &detection = detections[detection_idx];
-			
+			float cost = costs[detection_idx];
 
 			if(tracker_idx >= 0){
 				auto &tracklet = tracklets_[tracker_idx];
-				// std::cout << "Mapping traecker: " << tracklet -> get_id() << " with detecion no: " << detection_idx << std::endl;
-				update_map[tracklet -> get_id()] = detection;
-
+				bool iou_threshold_pass = (0 <= cost) && (cost <= 0.5);
+				// std::cout << "Tracker " << tracklet -> get_id() << " associated cost " << cost << " PASS: " << iou_threshold_pass << std::endl;
+				if(iou_threshold_pass){
+					std::cout << "Mapping tracker: " << tracklet -> get_id() << " with detecion at: " << detection.box.x  <<  "  ; "<< detection.box.y << std::endl;
+					update_map[tracklet -> get_id()] = detection;
+				}
 			}else{
 				KalmanOptions options;
 				options.fps = 60;
@@ -98,19 +132,41 @@ protected:
 
 		for(const auto& tracklet : tracklets_){
 			if(! tracklet -> is_allowed_to_update()){
-				std::cout << "Allowing tracklet: " << tracklet -> get_id() << " to be updated " << std::endl;
+				// std::cout << "Allowing tracklet: " << tracklet -> get_id() << " to be updated " << std::endl;
 				tracklet -> allow_updates();
 			}else{
 				auto &detection = update_map[tracklet -> get_id()];
 				
 
 				tracklet -> update(detection);
-				if(tracklet -> should_terminate()){
-					std::cout << "Destroying tracklet: " << tracklet -> get_id() << std::endl;
-					remove_tracklet(tracklet -> get_id());
-				}
+				
 			}
 		}
+
+		// for(const auto& tracklet : tracklets_){
+		// 	if(tracklet -> should_terminate()){
+		// 		std::cout << "Destroying tracklet: " << tracklet -> get_id() << std::endl;
+		// 		remove_tracklet(tracklet -> get_id());
+		// 	}
+		// }
+
+		for(int i = 0; i< tracklets_.size(); i++){
+			if(tracklets_[i] -> should_terminate()){
+				std::cout << "trying to delete " << i << "size: " << tracklets_.size() << std::endl;
+				tracklets_[i].reset();
+				std::cout << "reset the pointer" << std::endl;
+				tracklets_.erase(tracklets_.begin() + i);
+				i--;
+				break;
+			}
+
+		}
+
+		for(const auto& tracklet : tracklets_){
+			Detection det = tracklet -> get_updated_detecton();
+			std::cout << "Updated tracker: " << tracklet -> get_id() << " to position: |x: " << det.box.x << " | y:  " << det.box.y << std::endl;
+		}
+
 
 		cv_tracks_.notify_all();
 			
@@ -127,8 +183,9 @@ public:
 
 	void update(std::vector<Detection> detections, cv::Mat frame){
 		frame_ = frame;
-		auto assignments = calculate_assignments(detections);
-		update_tracklets(assignments, detections);
+		std::cout << "\n---------------------------------\n";
+		auto hungarian_data = calculate_assignments(detections);
+		update_tracklets(hungarian_data, detections);
 	}
 
 	std::vector<std::shared_ptr<Tracklet>> get_tracklets(){

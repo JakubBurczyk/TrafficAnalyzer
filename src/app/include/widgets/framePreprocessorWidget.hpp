@@ -54,6 +54,11 @@ public:
             fileDialog -> Open();
         }
 
+        ImGui::SameLine();
+        if(ImGui::Button("Remove mask")){
+            frame_preprocessor_ -> remove_mask();
+        }
+        
         if(ImGui::Button("Preview Masked")){
             image_viewer_ -> toggle_enabled();
         }

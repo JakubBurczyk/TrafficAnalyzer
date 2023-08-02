@@ -37,8 +37,24 @@ int main() {
 	APP_PROFILE_END_SESSION();
 
 	}catch (std::exception& e) {
+		std::cout << "APP EXCEPTION: " << e.what();
 		APP_ERROR("Main process terminated with: {}", e.what());
 	}
+	// KalmanOptions options;
+	// Detection det;
 
+	// std::vector<std::shared_ptr<Tracklet>> tracklets;
+	
+	// auto t = std::make_shared<Tracklet>(options,det);
+
+	// tracklets.push_back(t);
+	// tracklets[0].reset();
+
+	// std::cout << "reset done \n";
+
+	// tracklets.erase(tracklets.begin() + 0);
+
+
+	// std::cout << "EOF\n";
 	return 0;
 }

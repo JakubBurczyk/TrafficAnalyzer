@@ -20,6 +20,7 @@ struct KalmanOptions{
 
 class KalmanEstimator{
 private:
+    bool pure_prediction_  = false;
 
     KalmanOptions options_;
     float dt_ = 0;
@@ -56,7 +57,38 @@ protected:
     void predict(){
         // std::cout << "KALMAN PREDICTION STEP\n"; 
         kalman_.predict();
+        // std::cout << "Kalman PRE = \n " << kalman_.statePre << "\n";
         increment_prediction_counter();
+    }
+
+    void correct(const Measurement &m){
+        if(m.x < 0 || m.y < 0) {
+            pure_prediction_ = true;
+            
+            kalman_.statePost = kalman_.statePre.clone();
+
+            float x_predicted = kalman_.statePost.at<float>(0);
+            float y_predicted = kalman_.statePost.at<float>(1);
+
+            kalman_.statePost.at<float>(0) = x_predicted * (x_predicted > 0);
+            kalman_.statePost.at<float>(1) = y_predicted * (y_predicted > 0);
+
+            std::cout<< "No correction applied! |" <<  x_predicted << " | " << y_predicted<<"\n";
+            return;
+        }
+        //reset velocities after re-ack of detection
+        if(pure_prediction_){
+            pure_prediction_ = false;
+            kalman_.statePost.at<float>(3) = 0;
+            kalman_.statePost.at<float>(4) = 0;
+        }
+
+        cv::Mat measurement_matrix = cv::Mat(2,1,CV_32F,0.0);
+        measurement_matrix.at<float>(0,0) = m.x;
+        measurement_matrix.at<float>(1,0) = m.y;
+        auto correction = kalman_.correct(measurement_matrix);
+
+        reset_prediction_counter();
     }
 
 public:
@@ -72,15 +104,13 @@ public:
 
     uint32_t get_prediction_counter(){ return pure_prediction_coutner; }
 
-    void update(Measurement m){   
+    void update(Measurement m){
+        // std::cout << "\n---------------------------------\nMeasurement | x: " << m.x << " | y: " << m.x << " | \n"; 
         predict();
-        if(m.x < 0 || m.y < 0) { return; }
+        correct(m);
 
         // cv::Mat measurement_matrix = prepare_measurement(m,options_.inititial_measurement);
-        cv::Mat measurement_matrix = cv::Mat(2,1,CV_32F,0.0);
-        measurement_matrix.at<float>(0,0) = m.x;
-        measurement_matrix.at<float>(1,0) = m.y;
-        auto correction = kalman_.correct(measurement_matrix);
+        
         
         // std::cout << "-----------------------------------------------------\n";
         // std::cout << "Kalman CORRECTION = \n " << correction << "\n";
@@ -88,7 +118,7 @@ public:
         // std::cout << "Kalman PRE = \n " << kalman_.statePre << "\n";
         // std::cout << "-----------------------------------------------------\n";
         // std::cout << "Kalman POST = \n " << kalman_.statePost << "\n\n";
-        reset_prediction_counter();
+        
     }
 
     Measurement get_corrected_measurement(){
