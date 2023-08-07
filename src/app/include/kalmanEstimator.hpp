@@ -10,6 +10,12 @@ namespace Traffic{
 struct Measurement{
     float x = -1;
     float y = -1;
+    float v_x = 0;
+    float v_y = 0;
+
+    float velocity(){
+        return std::sqrt(v_x * v_x + v_y * v_y);
+    }
 };
 
 struct KalmanOptions{
@@ -126,6 +132,8 @@ public:
         Measurement result;
         result.x = kalman_.statePost.at<float>(0,0);
         result.y = kalman_.statePost.at<float>(1,0);
+        result.v_x = kalman_.statePost.at<float>(2,0);
+        result.v_y = kalman_.statePost.at<float>(3,0);
         return result;
     }
     

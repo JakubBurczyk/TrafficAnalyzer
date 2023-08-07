@@ -55,7 +55,7 @@ public:
 	uint64_t get_id(){ return id_; }
 	bool is_allowed_to_update(){ return allowed_updates_; }
 
-	Detection get_updated_detecton(){
+	Detection get_updated_detecton() const{
 		return current_detection_;
 	}
 
@@ -68,12 +68,25 @@ public:
 	}
 	
 
-	cv::Point2d get_center(){
+	cv::Point2d get_center() const{
 		cv::Point2d center;
 		center.x = current_detection_.box.x + current_detection_.box.width/2;
 		center.x = current_detection_.box.y + current_detection_.box.height/2;
 		return center;
 	}
+	
+	Measurement get_corrected_measurement(bool centered=false) const{
+		Measurement m = kalman_ -> get_corrected_measurement();
+
+		if(centered){
+			cv::Point2d center = get_center();
+			m.x = center.x;
+			m.y = center.y;
+		}
+
+		return m;
+	}
+
 
 	void update(Detection detection){
 		// previous_detection_ = current_detection_;
