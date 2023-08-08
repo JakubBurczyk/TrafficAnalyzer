@@ -27,7 +27,6 @@ private:
 
 	HungarianAlgorithm HungAlgo_;
 	
-	
 	std::vector<std::shared_ptr<Tracklet>> tracklets_;
 	cv::Mat frame_;
 protected:
@@ -191,6 +190,7 @@ public:
 	std::vector<std::shared_ptr<Tracklet>> get_tracklets(){
 		return tracklets_;
 	}
+
 
 	void reset(){
 		tracklets_ = std::vector<std::shared_ptr<Tracklet>>();

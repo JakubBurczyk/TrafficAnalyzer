@@ -52,7 +52,7 @@ public:
     void gui() override {
         ImGui::Begin("Image/Video Source");
     
-        static int selection = 0;
+        static int selection = 1;
         ImGui::RadioButton("Images",&selection, 0); ImGui::SameLine();
         ImGui::RadioButton("Video", &selection, 1);
         video_ = selection;

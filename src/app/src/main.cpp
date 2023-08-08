@@ -24,11 +24,14 @@ int main() {
 		auto detector 	= std::make_shared<ObjectDetector>();
 		auto background = std::make_shared<BackgroundEstimator>();
 		auto tracker 	= std::make_shared<TrafficTracker>();
+		auto trajectory = std::make_shared<TrajectoryGenerator>();
 		auto analyzer 	= std::make_shared<TrafficAnalyzer>(frames,
 															frame_prep,
 															detector,
 															background,
-															tracker);
+															tracker,
+															trajectory
+															);
 
 		TrafficAnalyzerApp app("App", analyzer);
 		app.run();

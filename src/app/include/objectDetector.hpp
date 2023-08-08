@@ -10,7 +10,7 @@ namespace Traffic{
 class ObjectDetector{
 private:
     std::string onnx_path_ = "NONE";
-    bool CUDA_ = false;
+    bool CUDA_ = true;
     bool ready_ = false;
     std::shared_ptr<IInference> inf;
 

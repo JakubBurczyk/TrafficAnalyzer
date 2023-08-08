@@ -25,7 +25,7 @@ protected:
         ImGui::Text("Analyze traffic");
 
         if(ImGui::Button("Start Analyzer")){
-            analyzer_ -> start_analyzer();
+            analyzer_ -> start_processor(PROCESSING_TYPE::TRAFFIC_ANALYZER);
         }
         
 
@@ -35,7 +35,18 @@ protected:
         ImGui::Text("Analyze background");
 
         if(ImGui::Button("Start background estimator")){
-            analyzer_ -> start_background_est();
+            analyzer_ -> start_processor(PROCESSING_TYPE::BACKGROUND_ESTIMATOR);
+            // analyzer_ -> start_background_est();
+        }
+
+    }
+
+    void trajectory_generator_gui(){
+        ImGui::Text("Generate reference trajectories");
+
+        if(ImGui::Button("Start trajectory generator")){
+            analyzer_ -> start_processor(PROCESSING_TYPE::TRAJECTORY_GENERATOR);
+            // analyzer_ -> start_trajectory_gen();
         }
 
     }
@@ -64,6 +75,7 @@ public:
         }
 
         traffic_analyzer_gui();
+        trajectory_generator_gui();
         background_esitmator_gui();
 
         ImGui::End();

@@ -6,13 +6,16 @@ TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider>          fram
                                     std::shared_ptr<FramePreprocessor>      frame_preprocessor,
                                     std::shared_ptr<ObjectDetector>         detector,
                                     std::shared_ptr<BackgroundEstimator>    background,
-                                    std::shared_ptr<TrafficTracker>         tracker)
+                                    std::shared_ptr<TrafficTracker>         tracker,
+                                    std::shared_ptr<TrajectoryGenerator>    trajectory
+                                    )
 :
     frame_provider_{frame_provider},
     frame_preprocessor_{frame_preprocessor},
     detector_{detector},
     background_est_{background},
-    tracker_{tracker}
+    tracker_{tracker},
+    trajectory_{trajectory}
 {
 
 }
@@ -27,87 +30,6 @@ void TrafficAnalyzer::run(){
     run_ = true;
 }
 
-void TrafficAnalyzer::create_analyzer_thread()
-{
-    std::cout << "Creating analyzer thread" << std::endl;
-    analyzer_thread_ = std::thread([this](){
-        while(true){
-            if(!is_running()){ break; }
-
-            update_analyzer();
-        }
-        std::cout << "Analyzer thread done\n";
-        return;
-    });
-}
-
-void TrafficAnalyzer::create_background_est_thread()
-{
-    std::cout << "Creating background estimator thread" << std::endl;
-    background_est_thread_ = std::thread([this](){
-        while(true){
-            if(!is_running()){ break; }
-
-            update_background_est();
-        }
-        std::cout << "Background estimator  thread done\n";
-        return;
-    });
-}
-
-void TrafficAnalyzer::join_analyzer_thread()
-{        
-    if(analyzer_thread_.joinable()){
-        std::cout << "Joining analyzer thread" << std::endl;
-        analyzer_thread_.join();
-    }
-}
-
-void TrafficAnalyzer::join_background_est_thread()
-{        
-    if(background_est_thread_.joinable()){
-        std::cout << "Joining analyzer thread" << std::endl;
-        background_est_thread_.join();
-    }
-}
-
-bool TrafficAnalyzer::start(bool &thread_prev_initialized, std::function<void(void)> join_callback){
-    bool running = is_running();
-
-    if(running){
-        stop();
-    }else if(thread_prev_initialized){
-        join_callback();
-    }
-
-    return !running;
-}
-
-bool TrafficAnalyzer::start_analyzer()
-{
-    start(  analyzer_initialized_,
-            std::bind(&TrafficAnalyzer::join_analyzer_thread, this));
-    
-    analyzer_initialized_ = true;
-
-    run();
-    create_analyzer_thread();
-
-    return !previous_run_;
-}
-
-bool TrafficAnalyzer::start_background_est()
-{
-    start(  background_est_initialized_,
-            std::bind(&TrafficAnalyzer::join_background_est_thread, this));
-
-    background_est_initialized_ = true;
-
-    run();
-    create_background_est_thread();
-
-    return !previous_run_;
-}
 
 void TrafficAnalyzer::reset_source(){
     stop();
@@ -122,7 +44,44 @@ bool TrafficAnalyzer::stop()
     return previous_run_;
 }
 
-bool TrafficAnalyzer::run_detector(bool run)
+void TrafficAnalyzer::start_processor(PROCESSING_TYPE type){
+    bool running = is_running();
+    auto &processor = processors_[type];
+
+    if(running){
+        stop();
+        
+    }else{
+        run();
+    }
+
+    join_processor(type);
+    create_processor(type);
+}
+
+void TrafficAnalyzer::create_processor(PROCESSING_TYPE type){
+    auto &processor = processors_[type];
+    std::function update_callback = processor_updates_[type];
+    processor.initialized = true;
+    processor.thr = std::thread([this, update_callback](){
+        while(true){
+            if(!is_running()){ break; }
+            update_callback();
+        }
+        return;
+    });
+}
+
+void TrafficAnalyzer::join_processor(PROCESSING_TYPE type){
+        auto &processor = processors_[type];
+        if(processor.initialized){
+            if(processor.thr.joinable()){
+                processor.thr.join();
+            }
+        }
+    }
+
+bool TrafficAnalyzer::update_detector(bool run)
 {
     if(!run){ return false;}
 
@@ -132,6 +91,26 @@ bool TrafficAnalyzer::run_detector(bool run)
         detector_ -> detect(frame_);
     }
 
+    return result;
+}
+
+bool TrafficAnalyzer::update_background_est(bool run)
+{
+    if(!run){ return false;}
+    bool result = false;
+    
+    background_est_ -> update(frame_);
+    result = true;
+
+    return result;
+}
+
+bool TrafficAnalyzer::update_trajectory(bool run){
+    if(!run){ return false;}
+    bool result = false;
+    std::cout << "TA | Updating trajectories" << std::endl;
+    trajectory_ -> update(tracker_ -> get_tracklets());
+    std::cout << "TA | Finished trajectoeis update" << std::endl;
     return result;
 }
 
@@ -146,16 +125,7 @@ bool TrafficAnalyzer::update_tracker(){
 }
 
 
-bool TrafficAnalyzer::run_background_est(bool run)
-{
-    if(!run){ return false;}
-    bool result = false;
-    
-    background_est_ -> update(frame_);
-    result = true;
 
-    return result;
-}
 
 bool TrafficAnalyzer::advance_frame()
 {
