@@ -71,7 +71,7 @@ public:
 	cv::Point2d get_center() const{
 		cv::Point2d center;
 		center.x = current_detection_.box.x + current_detection_.box.width/2;
-		center.x = current_detection_.box.y + current_detection_.box.height/2;
+		center.y = current_detection_.box.y + current_detection_.box.height/2;
 		return center;
 	}
 	

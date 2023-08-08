@@ -91,6 +91,7 @@ protected:
 
     bool run_trajectory_gen(){
         bool result = false;
+
         result = advance_frame();
         result = mask_frame();
         result = update_detector(result);

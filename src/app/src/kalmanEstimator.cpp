@@ -31,7 +31,7 @@ cv::Mat KalmanEstimator::prepare_measurement(Measurement m){
                                             {m.y } };
 
     cv::Mat prepared = cv::Mat(2,1, CV_32F, measurement_vectorized);
-    std::cout << "PREPARED MEASUREMENT = \n " << prepared << "\n";
+    // std::cout << "PREPARED MEASUREMENT = \n " << prepared << "\n";
     return prepared;
 }
 

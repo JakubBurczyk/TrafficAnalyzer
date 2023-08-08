@@ -37,7 +37,7 @@ private:
     cv::Mat velocity_y_channel_;
 
 protected:
-    cv::Mat create_empty_channel(){ return cv::Mat(options_.frame_width, options_.frame_height, CV_32F); }
+    cv::Mat create_empty_channel(){ return cv::Mat(options_.frame_height, options_.frame_width, CV_32F); }
 
     void prepare_channels(){
         presence_count_channel_ = create_empty_channel();
@@ -47,7 +47,7 @@ protected:
     }
 
     void add_to_channel(cv::Point2d p, cv::Mat &channel, float value){
-        auto channel_point_ref = channel.at<float>(p);
+        float& channel_point_ref = channel.at<float>(p);
         channel_point_ref = channel_point_ref + value;
     }
 
@@ -64,7 +64,8 @@ protected:
     }
 
     void apply_presence_count(std::shared_ptr<Tracklet> tracklet){
-        float count_increment = 1;
+        float count_increment = 1.0f;
+        auto center = tracklet -> get_center();
         add_to_channel(tracklet -> get_center(), presence_count_channel_, count_increment);
     }
 
@@ -82,7 +83,6 @@ protected:
     }
 
     void apply_tracklets_to_channels(std::vector<std::shared_ptr<Tracklet>> tracklets){
-        std::cout << "Trajectory Generator | applying tracklets to channel" << std::endl;
         for(const auto &tracklet : tracklets){
             apply_presence_count(tracklet);
 
@@ -111,9 +111,9 @@ public:
 
     void update(std::vector<std::shared_ptr<Tracklet>> tracklets){
         std::unique_lock<std::mutex> lock(mtx_trajectories_);
-        std::cout << "Trajectory Generator | update" << std::endl;
+        // std::cout << "Trajectory Generator | update" << std::endl;
         apply_tracklets_to_channels(tracklets);
-        std::cout << "Trajectory Generator | FINISHED update" << std::endl;
+        // std::cout << "Trajectory Generator | FINISHED update" << std::endl;
         cv_update_trajectories.notify_all();
     }
 
@@ -125,12 +125,48 @@ public:
     }
 
     cv::Mat generate_presence_heatmap(){
+        std::cout << "Generating presence heatmap | locking trajectories\n";
         std::unique_lock<std::mutex> lock(mtx_trajectories_);
-        cv::Mat heatmap;
-        cv::normalize(presence_count_channel_, heatmap, 0, 255, cv::NORM_MINMAX);
-        cv::cvtColor(presence_count_channel_, heatmap, CV_8UC1);
+
+        cv::Mat heatmap = presence_count_channel_.clone();
+        cv::Mat binary = heatmap.clone();
+
+        
+        // binary.convertTo(binary,CV_8UC1);
+        // cv::threshold(binary, binary, 0.0 , 1.0, cv::THRESH_BINARY);
+        // binary = binary * 255;
+        // cv::normalize(heatmap, heatmap, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8UC1);
+        // cv::cvtColor(binary, binary, cv::COLOR_GRAY2RGB);
+        
+        int dilation_elem = 0;
+        int dilation_size = 5;
+        int const max_elem = 2;
+        int const max_kernel_size = 21;
+
+        std::cout << "Struct element\n";
+        cv::Mat element = getStructuringElement( cv::MorphShapes::MORPH_ELLIPSE,
+            cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+            cv::Point( dilation_size, dilation_size ) );
+
+        std::cout << "Dilation\n";
+        cv::dilate(heatmap, heatmap, element);
+        // std::cout << "Median blur\n";
+        // cv::medianBlur(heatmap, heatmap, 3);
+
+
+        std::cout << "Normalizing presences\n";
+        cv::normalize(heatmap, heatmap, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+        cv::GaussianBlur(heatmap, heatmap, cv::Size(11,11), 20, 20);
+        
+        std::cout << "Converting to BGR\n";
+        
+        
+        cv::cvtColor(heatmap, heatmap, cv::COLOR_GRAY2BGR);
+        std::cout << "Applying colormap\n";
         cv::applyColorMap(heatmap, heatmap, cv::COLORMAP_JET);
+        std::cout << "Generating presence heatmap\n";
         return heatmap;
+
     }
     
 

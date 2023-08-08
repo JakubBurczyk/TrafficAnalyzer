@@ -48,7 +48,7 @@ public:
                 while(true){
                     std::unique_lock lock(trajectory_ -> get_mtx_update());
                     trajectory_ -> get_cv_update().wait(lock);
-                    std::cout << "TRAJECTORIES HAVE BEEN UPDATED"<< std::endl;
+                    // std::cout << "TRAJECTORIES HAVE BEEN UPDATED"<< std::endl;
                 }
             });
     }

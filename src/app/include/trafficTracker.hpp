@@ -39,9 +39,9 @@ protected:
 			}
 
 			if(tracklets_[i]-> get_id() == id){
-				std::cout << "trying to delete " << id << "size: " << tracklets_.size() << std::endl;
+				// std::cout << "trying to delete " << id << "size: " << tracklets_.size() << std::endl;
 				tracklets_[i].reset();
-				std::cout << "reset the pointer" << std::endl;
+				// std::cout << "reset the pointer" << std::endl;
 				tracklets_.erase(tracklets_.begin() + i);
 				i--;
 				break;
@@ -115,7 +115,7 @@ protected:
 				bool iou_threshold_pass = (0 <= cost) && (cost <= 0.5);
 				// std::cout << "Tracker " << tracklet -> get_id() << " associated cost " << cost << " PASS: " << iou_threshold_pass << std::endl;
 				if(iou_threshold_pass){
-					std::cout << "Mapping tracker: " << tracklet -> get_id() << " with detecion at: " << detection.box.x  <<  "  ; "<< detection.box.y << std::endl;
+					// std::cout << "Mapping tracker: " << tracklet -> get_id() << " with detecion at: " << detection.box.x  <<  "  ; "<< detection.box.y << std::endl;
 					update_map[tracklet -> get_id()] = detection;
 				}
 			}else{
@@ -125,7 +125,7 @@ protected:
 				options.inititial_measurement.y = (float)detection.box.y;
 				auto new_tracklet = std::make_shared<Tracklet>(options, detection);
 				tracklets_.push_back(new_tracklet);
-				std::cout << "Created new tracker: " << new_tracklet -> get_id() << " with detecion no: " << detection_idx << std::endl;
+				// std::cout << "Created new tracker: " << new_tracklet -> get_id() << " with detecion no: " << detection_idx << std::endl;
 			}
 		}
 
@@ -151,9 +151,9 @@ protected:
 
 		for(int i = 0; i< tracklets_.size(); i++){
 			if(tracklets_[i] -> should_terminate()){
-				std::cout << "trying to delete " << i << "size: " << tracklets_.size() << std::endl;
+				// std::cout << "trying to delete " << i << "size: " << tracklets_.size() << std::endl;
 				tracklets_[i].reset();
-				std::cout << "reset the pointer" << std::endl;
+				// std::cout << "reset the pointer" << std::endl;
 				tracklets_.erase(tracklets_.begin() + i);
 				i--;
 				break;
@@ -163,7 +163,7 @@ protected:
 
 		for(const auto& tracklet : tracklets_){
 			Detection det = tracklet -> get_updated_detecton();
-			std::cout << "Updated tracker: " << tracklet -> get_id() << " to position: |x: " << det.box.x << " | y:  " << det.box.y << std::endl;
+			// std::cout << "Updated tracker: " << tracklet -> get_id() << " to position: |x: " << det.box.x << " | y:  " << det.box.y << std::endl;
 		}
 
 
@@ -182,7 +182,7 @@ public:
 
 	void update(std::vector<Detection> detections, cv::Mat frame){
 		frame_ = frame;
-		std::cout << "\n---------------------------------\n";
+		// std::cout << "\n---------------------------------\n";
 		auto hungarian_data = calculate_assignments(detections);
 		update_tracklets(hungarian_data, detections);
 	}

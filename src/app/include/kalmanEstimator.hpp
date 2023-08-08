@@ -79,7 +79,7 @@ protected:
             kalman_.statePost.at<float>(0) = x_predicted * (x_predicted > 0);
             kalman_.statePost.at<float>(1) = y_predicted * (y_predicted > 0);
 
-            std::cout<< "No correction applied! |" <<  x_predicted << " | " << y_predicted<<"\n";
+            // std::cout<< "No correction applied! |" <<  x_predicted << " | " << y_predicted<<"\n";
             return;
         }
         //reset velocities after re-ack of detection

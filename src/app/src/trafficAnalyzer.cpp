@@ -108,9 +108,8 @@ bool TrafficAnalyzer::update_background_est(bool run)
 bool TrafficAnalyzer::update_trajectory(bool run){
     if(!run){ return false;}
     bool result = false;
-    std::cout << "TA | Updating trajectories" << std::endl;
+
     trajectory_ -> update(tracker_ -> get_tracklets());
-    std::cout << "TA | Finished trajectoeis update" << std::endl;
     return result;
 }
 
@@ -120,7 +119,8 @@ bool TrafficAnalyzer::update_tracker(){
 
     frame_ = detector_ -> visualize();
     tracker_ -> update(detector_ -> get_detections(), frame_);
-
+    result = true;
+    
     return result;
 }
 
