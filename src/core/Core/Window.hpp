@@ -14,8 +14,8 @@ class Window {
  public:
   struct Settings {
     std::string title;
-    const int width{1280};
-    const int height{720};
+    const int width{1920};
+    const int height{1080};
   };
 
   explicit Window(const Settings& settings);

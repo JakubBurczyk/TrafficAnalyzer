@@ -129,6 +129,7 @@ public:
             auto elapsed = now - last_frame_read_;
             last_frame_read_ = now;
             ms_since_last_frame_ = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+            if(ms_since_last_frame_.count() < 1) { ms_since_last_frame_ = std::chrono::milliseconds(1); };
             cv_frame_.notify_all();
         }
         return !frame_.empty();

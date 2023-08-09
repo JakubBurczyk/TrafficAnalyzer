@@ -20,11 +20,11 @@ private:
     bool show_options_ = false;
     std::shared_ptr<TrajectoryGenerator> trajectory_;
 
-    std::shared_ptr<ImageViewer> image_viewer_heatmap_count_;
+    std::shared_ptr<ImageViewer> image_viewer_heatmap_;
 
     std::thread image_thread_;
     
-    cv::Mat frame_heatmap_count;
+    cv::Mat frame_heatmap_;
 
     TrajectoryOptions& options;
     
@@ -40,7 +40,7 @@ public:
         trajectory_{trajectory},
         options{trajectory_ -> get_options_ref()}
     {
-        image_viewer_heatmap_count_ = std::make_shared<ImageViewer>();
+        image_viewer_heatmap_ = std::make_shared<ImageViewer>();
 
         set_hidden_state(hidden);
 
@@ -55,15 +55,36 @@ public:
 
     void gui() override {
         ImGui::Begin("Trajectory Generator");
+        if(ImGui::Button("Toggle heatmap")){
 
+            image_viewer_heatmap_ -> toggle_enabled();
+        }
+
+        if(ImGui::Button("Presence Heatmap")){
+            if(image_viewer_heatmap_ -> is_enabled()){
+                frame_heatmap_ = trajectory_ -> generate_presence_heatmap();
+            }
+        }
 
         ImGui::SameLine();
-        if(ImGui::Button("Preview Presence Heatmap")){
-            if(!image_viewer_heatmap_count_ -> is_enabled()){
-                frame_heatmap_count = trajectory_ -> generate_presence_heatmap();
+        if(ImGui::Button("Speed Heatmap")){
+            if(image_viewer_heatmap_ -> is_enabled()){
+                frame_heatmap_ = trajectory_ -> generate_avg_speed_heatmap();
             }
+        }
 
-            image_viewer_heatmap_count_ -> toggle_enabled();
+        ImGui::SameLine();
+        if(ImGui::Button("X velocity Heatmap")){
+            if(image_viewer_heatmap_ -> is_enabled()){
+                frame_heatmap_ = trajectory_ -> generate_x_speed_heatmap();
+            }
+        }
+
+        ImGui::SameLine();
+        if(ImGui::Button("Y velocity Heatmap")){
+            if(image_viewer_heatmap_ -> is_enabled()){
+                frame_heatmap_ = trajectory_ -> generate_y_speed_heatmap();
+            }
         }
 
         if(ImGui::Button("Select Save Directory")){
@@ -81,7 +102,7 @@ public:
         }
 
         ImGui::BeginChild("Background");
-        image_viewer_heatmap_count_ -> show_image(frame_heatmap_count);
+        image_viewer_heatmap_ -> show_image(frame_heatmap_);
         ImGui::EndChild();
 
         ImGui::End();

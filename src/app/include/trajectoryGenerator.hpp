@@ -3,6 +3,7 @@
 #include <condition_variable>
 
 #include "tracklet.hpp"
+#include "utils.hpp"
 
 namespace Traffic{
 
@@ -21,6 +22,7 @@ struct TrajectoryOptions{
     bool generate_separated_velocity = true;
 
     bool smoothing = false;
+    int heatmap_type = cv::COLORMAP_TURBO;
 
 };
 
@@ -38,6 +40,10 @@ private:
 
 protected:
     cv::Mat create_empty_channel(){ return cv::Mat(options_.frame_height, options_.frame_width, CV_32F); }
+
+    void initialize(){
+        prepare_channels();
+    }
 
     void prepare_channels(){
         presence_count_channel_ = create_empty_channel();
@@ -61,6 +67,7 @@ protected:
         // @todo THIS MIGHT BE FUCKING BROKEN DUE TO FLOATING POINT DIV = inf/nan/0
         // cv::setUseOptimized(false); could resolve that as a last ditch effort
         cv::Mat averaged = channel / presence_count_channel_;
+        return averaged;
     }
 
     void apply_presence_count(std::shared_ptr<Tracklet> tracklet){
@@ -97,12 +104,60 @@ protected:
         }
     }
 
+    cv::Mat color_heatmap(cv::Mat heatmap){
+        cv::cvtColor(heatmap, heatmap, cv::COLOR_GRAY2BGR);
+        cv::applyColorMap(heatmap, heatmap, options_.heatmap_type);
+        return heatmap;
+    }
+
+    cv::Mat dilate_channel(cv::Mat heatmap){
+        int dilation_size = 5;
+        cv::Mat element = getStructuringElement( cv::MorphShapes::MORPH_ELLIPSE,
+            cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+            cv::Point( dilation_size, dilation_size ) );
+
+        cv::dilate(heatmap, heatmap, element);
+        return heatmap;
+    }
+
+    cv::Mat directional_heatmap(cv::Mat &channel){
+        cv::Mat positive_mask;
+        cv::Mat negative_mask;
+        cv::Mat positive_heatmap;
+        cv::Mat negative_heatmap;
+
+        cv::Mat heatmap = average_channel(channel);
+
+        cv::normalize((heatmap > 0), positive_mask, 0, 1, cv::NORM_MINMAX, CV_32FC1);
+        cv::normalize((heatmap < 0), negative_mask, 0, 1, cv::NORM_MINMAX, CV_32FC1);
+
+        cv::multiply(heatmap, positive_mask, positive_heatmap);
+        cv::multiply(cv::abs(heatmap), negative_mask, negative_heatmap);
+
+        cv::normalize(positive_heatmap, positive_heatmap, 0, 127, cv::NORM_MINMAX, CV_8UC1);
+        cv::normalize(negative_heatmap, negative_heatmap, 0, 127, cv::NORM_MINMAX, CV_8UC1);
+
+        positive_heatmap = dilate_channel(positive_heatmap);
+        negative_heatmap = dilate_channel(negative_heatmap);
+
+        cv::GaussianBlur(positive_heatmap, positive_heatmap, cv::Size(11,11), 20, 20);
+        cv::GaussianBlur(negative_heatmap, negative_heatmap, cv::Size(11,11), 20, 20);
+
+        positive_heatmap.convertTo(positive_heatmap, CV_8SC1);
+        negative_heatmap.convertTo(negative_heatmap, CV_8SC1);
+
+        heatmap =  positive_heatmap - negative_heatmap;
+        heatmap.convertTo(heatmap, CV_8SC1);
+
+        return heatmap;
+    }
+
 
 public:
 
     TrajectoryGenerator()
     {
-        prepare_channels();
+        initialize();
     }
 
     std::mutex& get_mtx_update(){ return mtx_trajectories_; }
@@ -111,65 +166,78 @@ public:
 
     void update(std::vector<std::shared_ptr<Tracklet>> tracklets){
         std::unique_lock<std::mutex> lock(mtx_trajectories_);
-        // std::cout << "Trajectory Generator | update" << std::endl;
         apply_tracklets_to_channels(tracklets);
-        // std::cout << "Trajectory Generator | FINISHED update" << std::endl;
         cv_update_trajectories.notify_all();
     }
 
-    
+    void reset(){
+        initialize();
+    }
 
     void generate_heatmaps(){
         
-
     }
 
     cv::Mat generate_presence_heatmap(){
-        std::cout << "Generating presence heatmap | locking trajectories\n";
         std::unique_lock<std::mutex> lock(mtx_trajectories_);
 
         cv::Mat heatmap = presence_count_channel_.clone();
-        cv::Mat binary = heatmap.clone();
-
         
         // binary.convertTo(binary,CV_8UC1);
         // cv::threshold(binary, binary, 0.0 , 1.0, cv::THRESH_BINARY);
         // binary = binary * 255;
         // cv::normalize(heatmap, heatmap, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8UC1);
         // cv::cvtColor(binary, binary, cv::COLOR_GRAY2RGB);
-        
-        int dilation_elem = 0;
-        int dilation_size = 5;
-        int const max_elem = 2;
-        int const max_kernel_size = 21;
-
-        std::cout << "Struct element\n";
-        cv::Mat element = getStructuringElement( cv::MorphShapes::MORPH_ELLIPSE,
-            cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-            cv::Point( dilation_size, dilation_size ) );
-
-        std::cout << "Dilation\n";
-        cv::dilate(heatmap, heatmap, element);
-        // std::cout << "Median blur\n";
+                // std::cout << "Median blur\n";
         // cv::medianBlur(heatmap, heatmap, 3);
 
-
-        std::cout << "Normalizing presences\n";
+        cv::GaussianBlur(heatmap, heatmap, cv::Size(11,11), 20, 20);
         cv::normalize(heatmap, heatmap, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+
+        heatmap = dilate_channel(heatmap);
+        heatmap = color_heatmap(heatmap);
+
+        return heatmap;
+    }
+
+    cv::Mat generate_avg_speed_heatmap(){
+        std::unique_lock<std::mutex> lock(mtx_trajectories_);
+
+        cv::Mat heatmap = average_channel(velocity_abs_channel_);
+
+        cv::normalize(heatmap, heatmap, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+
+        heatmap = dilate_channel(heatmap);
+
         cv::GaussianBlur(heatmap, heatmap, cv::Size(11,11), 20, 20);
         
-        std::cout << "Converting to BGR\n";
-        
-        
-        cv::cvtColor(heatmap, heatmap, cv::COLOR_GRAY2BGR);
-        std::cout << "Applying colormap\n";
-        cv::applyColorMap(heatmap, heatmap, cv::COLORMAP_JET);
-        std::cout << "Generating presence heatmap\n";
-        return heatmap;
+        heatmap = color_heatmap(heatmap);
 
+        return heatmap;
+    }
+
+    cv::Mat generate_x_speed_heatmap(){
+        std::unique_lock<std::mutex> lock(mtx_trajectories_);
+        cv::Mat heatmap = directional_heatmap(velocity_x_channel_);
+
+        cv::normalize(heatmap, heatmap, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+
+        heatmap = color_heatmap(heatmap);
+
+        return heatmap;
+    }
+
+    cv::Mat generate_y_speed_heatmap(){
+        std::unique_lock<std::mutex> lock(mtx_trajectories_);
+        cv::Mat heatmap = directional_heatmap(velocity_y_channel_);
+
+        cv::normalize(heatmap, heatmap, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+
+        heatmap = color_heatmap(heatmap);
+
+        return heatmap;
     }
     
-
 };
 
 } //namespace Traffic

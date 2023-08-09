@@ -1,5 +1,5 @@
 #pragma once
-
+#include <opencv2/opencv.hpp>
 #include <string_view>
 #include <filesystem>
 
@@ -42,6 +42,18 @@ static std::vector<std::string> get_files_by_extensions(std::string path, std::v
     APP_DEBUG(UTILS_DEBUG_NAME "Loaded: {} files", files.size());
     return files;
 }
+
+static cv::Mat cvMatSignum(cv::Mat src)
+{
+    cv::Mat z = cv::Mat::zeros(src.size(), src.type()); 
+    cv::Mat a = (z < src) & 1;
+    cv::Mat b = (src < z) & 1;
+
+    cv::Mat dst;
+    addWeighted(a,1.0,b,-1.0,0.0,dst, CV_32F);
+    return dst;
+}
+
 
 // static std::vector<std::string> get_files(std::string path){
 //     std::vector<std::string> files;
