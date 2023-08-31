@@ -1,18 +1,28 @@
 #pragma once
 #include "imgui.h"
 
+#include <span>
 #include <thread>
 #include <chrono>
 #include <utility>
 
 #include "widget.hpp"
 #include "imageViewer.hpp"
+#include "imgui-combo-filter.h"
 
 #include "trajectoryGenerator.hpp"
 
 
 
 namespace Traffic{
+
+static const char* item_getter(std::span<const std::string> items, int index) {
+    if (index >= 0 && index < (int)items.size()) {
+        return items[index].c_str();
+    }
+    return "...";
+}
+
 
 class TrajectoryGeneratorWidget : public Widget{
 
@@ -30,6 +40,7 @@ private:
     
     std::shared_ptr<ImGui::FileBrowser> fileDialog;
 
+    std::string results_path = "./";
 protected:
 
 
@@ -42,6 +53,8 @@ public:
     {
         image_viewer_heatmap_ = std::make_shared<ImageViewer>();
 
+        fileDialog = std::make_shared<ImGui::FileBrowser>(ImGuiFileBrowserFlags_::ImGuiFileBrowserFlags_SelectDirectory);
+
         set_hidden_state(hidden);
 
         image_thread_ = std::thread([this](){
@@ -52,9 +65,23 @@ public:
                 }
             });
     }
+    
 
     void gui() override {
         ImGui::Begin("Trajectory Generator");
+
+        static int heatmap_color = 2;
+        static std::array<std::string, 22> colors{"AUTUMN", "BONE", "JET", "WINTER", "RAINBOW"
+                                                    ,"OCEAN", "SUMMER", "SPRING", "COOL", "HSV"
+                                                    ,"PINK", "HOT", "PARULA", "MAGMA", "INFERNO"
+                                                    ,"PLASMA", "VIRIDIS", "CIVIDIS", "TWILIGHT"
+                                                    ,"TWILIGHT_SHIFTED", "TURBO", "DEEPGREEN"};
+
+        if (ImGui::ComboFilter("Colormap", heatmap_color, colors, item_getter)) {
+            options.heatmap_type = heatmap_color;
+        }
+
+
         if(ImGui::Button("Toggle heatmap")){
 
             image_viewer_heatmap_ -> toggle_enabled();
@@ -87,19 +114,29 @@ public:
             }
         }
 
-        if(ImGui::Button("Select Save Directory")){
-            fileDialog = std::make_shared<ImGui::FileBrowser>(ImGuiFileBrowserFlags_::ImGuiFileBrowserFlags_SelectDirectory);
-            fileDialog -> Open();
-        }
+        // if(ImGui::Button("Select Save Directory")){
+        //     fileDialog -> Open();
+        // }
 
-        static std::string results_path = "./";
-        static char results_filename[512] = "trajectory";
-        ImGui::InputTextWithHint("Filename", "filename",results_filename,512);
-        ImGui::SameLine();
+        // if(fileDialog){
+        //     fileDialog -> Display();
+        //     if(fileDialog -> HasSelected())
+        //     {
+        //         results_path = fileDialog -> GetSelected().string() + "/";
+        //         fileDialog -> ClearSelected();
+        //     }
+        // }
 
-        if(ImGui::Button("Save Trajectory Generation Results")){
+        
+        // static char results_filename[512] = "heatmap";
+        // ImGui::InputTextWithHint("Filename", "filename",results_filename,512);
+        // ImGui::SameLine();
 
-        }
+        // if(ImGui::Button("Save Heatmap")){
+        //     std::string filename = results_path + std::string(results_filename) +  "_" + utils::return_current_time_and_date() + ".png";
+        //     std::cout << "Saving heatmap to: " << filename << std::endl;
+        //     cv::imwrite(filename,frame_heatmap_);
+        // }
 
         ImGui::BeginChild("Background");
         image_viewer_heatmap_ -> show_image(frame_heatmap_);

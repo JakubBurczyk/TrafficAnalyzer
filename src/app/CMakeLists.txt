@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
     src/Hungarian.cpp
     src/kalmanEstimator.cpp
     src/tracklet.cpp
+    src/imgui-combo-filter.cpp
 )
 
 add_executable(${NAME} ${MAIN_FILE} ${PROJECT_SOURCES})

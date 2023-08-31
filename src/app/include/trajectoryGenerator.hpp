@@ -1,5 +1,5 @@
 #pragma once
-
+#include <optional>
 #include <condition_variable>
 
 #include "tracklet.hpp"
@@ -104,9 +104,12 @@ protected:
         }
     }
 
-    cv::Mat color_heatmap(cv::Mat heatmap){
+    cv::Mat color_heatmap(cv::Mat heatmap, int color = -1){
         cv::cvtColor(heatmap, heatmap, cv::COLOR_GRAY2BGR);
-        cv::applyColorMap(heatmap, heatmap, options_.heatmap_type);
+        if(color == -1){
+            color = options_.heatmap_type;
+        }
+        cv::applyColorMap(heatmap, heatmap, color);
         return heatmap;
     }
 

@@ -5,6 +5,8 @@
 
 #include "GL/gl3w.h"
 #include "imgui.h"
+#include "imfilebrowser.h"
+#include "utils.hpp"
 
 class ImageViewer{
 private:
@@ -27,6 +29,9 @@ private:
 
     float INT_SCALE_FACTOR = 10;
 
+    std::shared_ptr<ImGui::FileBrowser> fileDialog;
+    std::string save_path = "./";
+    char filename[512] = "Image";
 public:
 
     ImageViewer(){
@@ -39,6 +44,8 @@ public:
         glGenTextures( 1, &texture_ );
 
         name = "[" + std::to_string(texture_) + "]";
+
+        fileDialog = std::make_shared<ImGui::FileBrowser>(ImGuiFileBrowserFlags_::ImGuiFileBrowserFlags_SelectDirectory);
     }
 
     bool is_enabled(){ return enabled_; }
@@ -75,12 +82,41 @@ public:
         if(!enabled_){
             ImGui::Text("Image preview disabled");
         }else{
+
+            if(ImGui::Button(("Select Save Directory" + name).c_str())){
+                fileDialog -> Open();
+            }
+
+            if(fileDialog){
+                fileDialog -> Display();
+                if(fileDialog -> HasSelected())
+                {
+                    save_path = fileDialog -> GetSelected().string() + "/";
+                    fileDialog -> ClearSelected();
+                }
+            }
+
+            ImGui::SameLine();
+            
+            ImGui::PushItemWidth(150);
+            ImGui::InputTextWithHint(("Filename " + name).c_str(), "filename",filename,512);
+            ImGui::PopItemWidth();
+
+            ImGui::SameLine();
+            if(ImGui::Button(("Save Image "+ name).c_str())){
+                std::string date = utils::return_current_time_and_date();
+                std::string path = save_path + std::string(filename) +  "_" + date + ".png";
+                std::cout << "Saving image to: " << path << std::endl;
+                cv::imwrite(path,cv::Mat(frame));
+            }
+
             if(ImGui::CollapsingHeader(("Image Controls" + name).c_str(), ImGuiTreeNodeFlags_None))
             {
+                ImGui::PushItemWidth(500);
                 ImGui::SliderInt(("Width scale" + name).c_str(), &scale_w_, 1, 10);
                 ImGui::SliderInt(("Heightd scale" + name).c_str() , &scale_h_, 1, 10);
             }
-
+            ImGui::PopItemWidth();
             if(frame.empty()){
                 ImGui::Text("Image is empty");
             }else{

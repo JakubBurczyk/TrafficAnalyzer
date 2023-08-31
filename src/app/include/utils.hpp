@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <string_view>
 #include <filesystem>
-
+#include <chrono>
 
 #define UTILS_DEBUG_NAME "Utils | "
 namespace utils{
@@ -16,6 +16,16 @@ namespace utils{
 // {
 //     return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 // }
+
+static std::string return_current_time_and_date()
+{
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H:%M:%S");
+    return ss.str();
+}
 
 static std::vector<std::string> get_files_by_extensions(std::string path, std::vector<std::string> extensions){
     std::vector<std::string> files;
@@ -39,7 +49,6 @@ static std::vector<std::string> get_files_by_extensions(std::string path, std::v
 
     }
 
-    APP_DEBUG(UTILS_DEBUG_NAME "Loaded: {} files", files.size());
     return files;
 }
 

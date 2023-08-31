@@ -22,9 +22,9 @@ private:
 protected:
 
     void traffic_analyzer_gui(){
-        ImGui::Text("Analyze traffic");
+        ImGui::Text("Video");
 
-        if(ImGui::Button("Start Analyzer")){
+        if(ImGui::Button("Start video preview")){
             analyzer_ -> start_processor(PROCESSING_TYPE::TRAFFIC_ANALYZER);
         }
         
@@ -42,7 +42,7 @@ protected:
     }
 
     void trajectory_generator_gui(){
-        ImGui::Text("Generate reference trajectories");
+        ImGui::Text("Generate trajectories");
 
         if(ImGui::Button("Start trajectory generator")){
             analyzer_ -> start_processor(PROCESSING_TYPE::TRAJECTORY_GENERATOR);
