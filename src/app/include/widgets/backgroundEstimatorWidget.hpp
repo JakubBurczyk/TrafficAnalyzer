@@ -205,6 +205,7 @@ public:
             fileDialog -> Open();
         }
 
+
         static std::string results_path = "./";
         static char results_filename[512] = "bg_est_result";
         ImGui::InputTextWithHint("Filename", "filename",results_filename,512);

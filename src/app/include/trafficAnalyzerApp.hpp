@@ -17,6 +17,7 @@
 #include "framePreprocessorWidget.hpp"
 #include "trafficTrackerWidget.hpp"
 #include "trajectoryGeneratorWidget.hpp"
+#include "collisionEstimatorWidget.hpp"
 
 namespace Traffic{
 
@@ -38,20 +39,23 @@ public:
     {
         gui_ = std::make_shared<TrafficAnalyzerGui>();
         
-        gui_ -> add_widget(std::make_shared<FrameProviderWidget>(analyzer_ -> get_frame_provider()));
+        
 
         gui_ -> add_widget(std::make_shared<FramePreprocessorWidget>(analyzer_ -> get_frame_preprocessor()));
 
         gui_ -> add_widget(std::make_shared<BackgroundEstimatorWidget>(analyzer_ -> get_background_estimator()));
 
-        gui_ -> add_widget(std::make_shared<ObjectDetectorWidget>(analyzer_->get_object_detector()));
-
         gui_ -> add_widget(std::make_shared<TrafficTrackerWidget>(analyzer_ -> get_traffic_tracker()));
 
         gui_ -> add_widget(std::make_shared<TrajectoryGeneratorWidget>(analyzer_ -> get_trajectory_generator()));
 
-        gui_ -> add_widget(std::make_shared<TrafficAnalyzerWidget>(analyzer_));
+        gui_ -> add_widget(std::make_shared<CollisionEstimatorWidget>(analyzer_ -> get_collision_estimator()));
 
+        gui_ -> add_widget(std::make_shared<ObjectDetectorWidget>(analyzer_->get_object_detector()));
+
+        gui_ -> add_widget(std::make_shared<FrameProviderWidget>(analyzer_ -> get_frame_provider()));
+
+        gui_ -> add_widget(std::make_shared<TrafficAnalyzerWidget>(analyzer_));
         
     }
 

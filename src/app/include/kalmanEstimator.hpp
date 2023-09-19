@@ -85,8 +85,8 @@ protected:
         //reset velocities after re-ack of detection
         if(pure_prediction_){
             pure_prediction_ = false;
-            kalman_.statePost.at<float>(3) = 0;
-            kalman_.statePost.at<float>(4) = 0;
+            // kalman_.statePost.at<float>(3) = 0;
+            // kalman_.statePost.at<float>(4) = 0;
         }
 
         cv::Mat measurement_matrix = cv::Mat(2,1,CV_32F,0.0);

@@ -7,7 +7,8 @@ TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider>          fram
                                     std::shared_ptr<ObjectDetector>         detector,
                                     std::shared_ptr<BackgroundEstimator>    background,
                                     std::shared_ptr<TrafficTracker>         tracker,
-                                    std::shared_ptr<TrajectoryGenerator>    trajectory
+                                    std::shared_ptr<TrajectoryGenerator>    trajectory,
+                                    std::shared_ptr<CollisionEstimator>     collision
                                     )
 :
     frame_provider_{frame_provider},
@@ -15,7 +16,8 @@ TrafficAnalyzer::TrafficAnalyzer(   std::shared_ptr<FrameProvider>          fram
     detector_{detector},
     background_est_{background},
     tracker_{tracker},
-    trajectory_{trajectory}
+    trajectory_{trajectory},
+    collision_{collision}
 {
 
 }
@@ -117,13 +119,21 @@ bool TrafficAnalyzer::update_tracker(){
 
     bool result = false;
 
-    frame_ = detector_ -> visualize();
-    tracker_ -> update(detector_ -> get_detections(), frame_);
+    cv::Mat frame = detector_ -> visualize();
+    tracker_ -> update(detector_ -> get_detections(), frame);
     result = true;
     
     return result;
 }
 
+bool TrafficAnalyzer::update_collisions(){
+    bool result = false;
+
+    collision_ -> update(tracker_ -> get_tracklets(), frame_);
+
+    result = true;
+    return result;
+}
 
 
 

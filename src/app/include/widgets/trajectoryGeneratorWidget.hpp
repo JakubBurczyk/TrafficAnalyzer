@@ -113,6 +113,7 @@ public:
                 frame_heatmap_ = trajectory_ -> generate_y_speed_heatmap();
             }
         }
+        
 
         // if(ImGui::Button("Select Save Directory")){
         //     fileDialog -> Open();

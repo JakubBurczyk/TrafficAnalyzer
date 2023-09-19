@@ -4,8 +4,6 @@
 #include "trafficAnalyzerApp.hpp"
 #include "Core/Log.hpp"
 
-#include "Hungarian.h"
-
 using namespace Traffic;
 
 
@@ -22,12 +20,14 @@ int main() {
 		auto background = std::make_shared<BackgroundEstimator>();
 		auto tracker 	= std::make_shared<TrafficTracker>();
 		auto trajectory = std::make_shared<TrajectoryGenerator>();
+		auto collision	= std::make_shared<CollisionEstimator>();
 		auto analyzer 	= std::make_shared<TrafficAnalyzer>(frames,
 															frame_prep,
 															detector,
 															background,
 															tracker,
-															trajectory
+															trajectory,
+															collision
 															);
 
 		TrafficAnalyzerApp app("App", analyzer);

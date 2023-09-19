@@ -14,6 +14,7 @@
 #include "framePreprocessor.hpp"
 #include "trafficTracker.hpp"
 #include "trajectoryGenerator.hpp"
+#include "collisionEstimator.hpp"
 
 namespace Traffic{
 
@@ -45,6 +46,7 @@ private:
     std::shared_ptr<BackgroundEstimator> background_est_;
     std::shared_ptr<TrafficTracker> tracker_;
     std::shared_ptr<TrajectoryGenerator> trajectory_;
+    std::shared_ptr<CollisionEstimator> collision_;
 
     cv::Mat frame_;
 
@@ -73,6 +75,7 @@ protected:
     bool update_detector(bool run);
     bool update_background_est(bool run);
     bool update_trajectory(bool run);
+    bool update_collisions();
 
     bool mask_frame();
     bool advance_frame();
@@ -86,6 +89,7 @@ protected:
         result = mask_frame();
         result = update_detector(result);
         result = update_tracker();
+        result = update_collisions();
         return result;
     }
 
@@ -103,10 +107,10 @@ protected:
 
     bool run_background_est(){
         bool result = false;
-        for(int i = 0; i<10; i++){
-            result = advance_frame();
-        }
-        
+        // for(int i = 0; i<30; i++){
+        //     result = advance_frame();
+        // }
+        result = advance_frame();
         if(result){
             background_est_ -> update(frame_);
         }
@@ -122,7 +126,8 @@ public:
                     std::shared_ptr<ObjectDetector>         detector,
                     std::shared_ptr<BackgroundEstimator>    background,
                     std::shared_ptr<TrafficTracker>         tracker,
-                    std::shared_ptr<TrajectoryGenerator>    TrajectoryGenerator
+                    std::shared_ptr<TrajectoryGenerator>    TrajectoryGenerator,
+                    std::shared_ptr<CollisionEstimator>     collision
                     );
 
     std::shared_ptr<FrameProvider>          get_frame_provider()        { return frame_provider_;       }
@@ -131,6 +136,7 @@ public:
     std::shared_ptr<BackgroundEstimator>    get_background_estimator()  { return background_est_;       }
     std::shared_ptr<TrafficTracker>         get_traffic_tracker()       { return tracker_;              }
     std::shared_ptr<TrajectoryGenerator>    get_trajectory_generator()  { return trajectory_;           }
+    std::shared_ptr<CollisionEstimator>     get_collision_estimator()   { return collision_;            }
 
     void start_processor(PROCESSING_TYPE type);
 

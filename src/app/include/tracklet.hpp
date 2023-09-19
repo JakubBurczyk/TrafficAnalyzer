@@ -47,13 +47,13 @@ public:
 		kalman_.reset();
 	}
 
+	uint64_t get_id() const { return id_; }
+	bool is_allowed_to_update(){ return allowed_updates_; }
+	
 	static void reset_ids(){
 		std::unique_lock<std::mutex> lock(mtx_id_);
 		lowest_id_ = 0;
 	}
-
-	uint64_t get_id(){ return id_; }
-	bool is_allowed_to_update(){ return allowed_updates_; }
 
 	Detection get_updated_detecton() const{
 		return current_detection_;
@@ -80,8 +80,8 @@ public:
 
 		if(centered){
 			cv::Point2d center = get_center();
-			m.x = center.x;
-			m.y = center.y;
+			m.x = m.x + current_detection_.box.width/2;
+			m.y = m.y + current_detection_.box.height/2;
 		}
 
 		return m;
@@ -113,7 +113,7 @@ public:
 
 		current_detection_.box.x = corrected.x;
 		current_detection_.box.y = corrected.y;
-
+		
 		// std::cout << "\n###############################\n\n";
 	}
 

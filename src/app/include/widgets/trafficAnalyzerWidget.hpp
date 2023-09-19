@@ -39,6 +39,11 @@ protected:
             // analyzer_ -> start_background_est();
         }
 
+        if(ImGui::Button("Send to detector")){
+            cv::Mat frame = analyzer_ -> get_background_estimator() -> get_background();
+            analyzer_ -> get_object_detector() -> detect(frame);
+        }
+
     }
 
     void trajectory_generator_gui(){
