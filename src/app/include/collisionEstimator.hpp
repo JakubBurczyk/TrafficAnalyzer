@@ -25,6 +25,8 @@ private:
     Measurement state_;
 
     double time_to_intersect_ = std::numeric_limits<double>::infinity();
+    double pet_ = std::numeric_limits<double>::infinity();
+
 public:
     Collider(std::shared_ptr<Tracklet> tracklet, const CollistionOptions &options){
         state_ = tracklet -> get_corrected_measurement(true);
@@ -55,9 +57,14 @@ public:
     std::shared_ptr<utils::LineSegment> get_trajectory_seg() const { return trajectory_seg; }
     bool is_valid() const { return  trajectory_seg -> is_valid(); }
     uint64_t get_id() const  { return id_; }
-    double get_tti() const { return time_to_intersect_; }
-    void set_tti(double value) { time_to_intersect_ = value; }
     Measurement get_state() const { return state_; }
+
+    double get_tti() const { return time_to_intersect_; }
+    double get_pet() const { return pet_; }
+    void set_tti(double value) { time_to_intersect_ = value; }
+    void set_pet(double value) { pet_ = value; }
+
+    
 
     cv::Point2d get_intersection_point(const Collider &collider){
         auto collider_slope = collider.get_trajectory_seg() -> slope;
@@ -87,17 +94,10 @@ public:
         double tti = std::numeric_limits<double>::infinity();
 
         double distance_x = m.x - target.x;
-        std::cout << "dist_x: " << distance_x;
-
         double distance_y = m.y - target.y;
-        std::cout << " | dist_y: " << distance_y;
-
         double distance = std::sqrt(distance_x * distance_x + distance_y * distance_y);
-        std::cout << " | dist: " << distance;
-
         double velocity = m.velocity();
-        std::cout << " | velocity: " << velocity;
-        
+
         if(m.velocity() > 0.5){
             
             tti = distance / m.velocity();
@@ -119,9 +119,12 @@ public:
             cv::Point2d intersection = get_intersection_point(collider);
             intersection_points_.push_back(intersection);
             
-            double tti = calculate_tt_intersect(intersection);
+            double tti = this -> calculate_tt_intersect(intersection);
+            double collider_tti = collider.calculate_tt_intersect(intersection); 
+
             if(tti < this -> get_tti()){
                 this -> set_tti(tti);
+                this -> set_pet(std::abs(tti - collider_tti));
                 // std::cout << "set_tti to: " << this -> get_tti() << std::endl;
             }
             
@@ -143,7 +146,7 @@ public:
         cv::Scalar color; 
         // = collides_ ? cv::Scalar(255,145,0) : cv::Scalar(0,255,200);
         // std::cout << "Visu host: " << this -> get_id() << " collides = " << collides_ << std::endl;
-        
+
         if(collides_){
             color = cv::Scalar(0,145,255);
         }else{
@@ -167,7 +170,16 @@ public:
 		cv::putText(output_frame, s, cv::Point(p1.x, p1.y), cv::FONT_HERSHEY_DUPLEX, font_scale, cv::Scalar(0, 0, 0), 1, 0);
 	
         for(const auto& intersection : intersection_points_){
+            
+            std::stringstream stream;
+            stream << "PET:" << std::fixed << std::setprecision(2) << this -> get_pet();
+            
             cv::circle(output_frame,intersection,5,cv::Scalar(0,0,255),2);
+            cv::Size textSize = cv::getTextSize(stream.str(), cv::FONT_HERSHEY_DUPLEX, font_scale, 1, 0);
+            cv::Rect textBox(intersection.x, intersection.y + textSize.height, textSize.width, textSize.height);
+            cv::rectangle(output_frame, textBox, color, cv::FILLED);
+            cv::putText(output_frame, stream.str(), intersection + cv::Point2d(0, 2 * textSize.height), cv::FONT_HERSHEY_DUPLEX, font_scale, cv::Scalar(0, 0, 0), 1, 0);
+            
         }
     }
 
