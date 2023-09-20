@@ -1,7 +1,9 @@
 #pragma once
 
+#include <iomanip>
+#include <sstream>
 #include <condition_variable>
-
+#include<limits>
 #include "tracklet.hpp"
 #include "utils.hpp"
 
@@ -20,17 +22,24 @@ private:
     bool collides_ = false;
     std::vector<cv::Point2d> intersection_points_;
     uint64_t id_;
+    Measurement state_;
+
+    double time_to_intersect_ = std::numeric_limits<double>::infinity();
 public:
     Collider(std::shared_ptr<Tracklet> tracklet, const CollistionOptions &options){
-        Measurement m = tracklet -> get_corrected_measurement(true);
+        state_ = tracklet -> get_corrected_measurement(true);
         cv::Point2d p1;
         cv::Point2d p2;
-        p1.x = m.x;
-        p1.y = m.y;
+        p1.x = state_.x;
+        p1.y = state_.y;
         // std::cout << "mv_x: " << m.v_x << " | mv_y: " << m.v_y << " | ";
-        p2.x = m.x + m.v_x * options.future_millis  / 1000;
-        p2.y = m.y + m.v_y * options.future_millis  / 1000;
+        p2.x = state_.x + state_.v_x * options.future_millis  / 1000;
+        p2.y = state_.y + state_.v_y * options.future_millis  / 1000;
         
+        double distance_x = p2.x - p1.x;
+        double distance_y = p2.y - p1.y;
+        double distance = std::sqrt(distance_x * distance_x + distance_y * distance_y);
+
         if(p1.x < p2.x){
             reversed_trajectory = true;
             std::swap(p1,p2);
@@ -40,11 +49,15 @@ public:
 
         trajectory_seg = std::make_shared<utils::LineSegment>(p1,p2);
         // std::cout << "p1: " << trajectory_seg -> p1.x << "; " << trajectory_seg ->  p1.y << " | p2: "<< trajectory_seg -> p2.x << "; " << trajectory_seg -> p2.y << std::endl;
+        // std::cout << " distance: " <<  distance << " velocity " << state_.velocity() << " Time " << distance / state_.velocity() << std::endl;
     }
 
     std::shared_ptr<utils::LineSegment> get_trajectory_seg() const { return trajectory_seg; }
     bool is_valid() const { return  trajectory_seg -> is_valid(); }
     uint64_t get_id() const  { return id_; }
+    double get_tti() const { return time_to_intersect_; }
+    void set_tti(double value) { time_to_intersect_ = value; }
+    Measurement get_state() const { return state_; }
 
     cv::Point2d get_intersection_point(const Collider &collider){
         auto collider_slope = collider.get_trajectory_seg() -> slope;
@@ -62,23 +75,58 @@ public:
             intersection_point.y = trajectory_seg -> slope * intersection_point.x + trajectory_seg -> intercept;
         }
 
-        std::cout << "Intersection of " << this -> get_id()
-        << " and " << collider.get_id() << "located at: "
-        << intersection_point.x << " ; " << intersection_point.y << std::endl;
+        // std::cout << "Intersection of " << this -> get_id()
+        // << " and " << collider.get_id() << "located at: "
+        // << intersection_point.x << " ; " << intersection_point.y << std::endl;
         return intersection_point;
     };
 
-    bool check_collision(const Collider &collider){
+    double calculate_tt_intersect(cv::Point2d target){
+        
+        Measurement m = this -> get_state();
+        double tti = std::numeric_limits<double>::infinity();
+
+        double distance_x = m.x - target.x;
+        std::cout << "dist_x: " << distance_x;
+
+        double distance_y = m.y - target.y;
+        std::cout << " | dist_y: " << distance_y;
+
+        double distance = std::sqrt(distance_x * distance_x + distance_y * distance_y);
+        std::cout << " | dist: " << distance;
+
+        double velocity = m.velocity();
+        std::cout << " | velocity: " << velocity;
+        
+        if(m.velocity() > 0.5){
+            
+            tti = distance / m.velocity();
+            std::cout << " | tti: " << tti << std::endl;
+        }
+
+        return tti;
+    }
+
+    bool check_collision(Collider &collider){
         if(this -> get_id() == collider.get_id() ) { return false; }
-        if(!is_valid() || !collider.is_valid()) { std::cout << "erly terminate\n";return false; }
+        if(!is_valid() || !collider.is_valid()) { return false; }
 
         // std::cout << "Checking collision" << std::endl;
         bool collision = utils::doSegmentIntersect(trajectory_seg, collider.get_trajectory_seg());
         collides_ = collides_ || collision;
 
         if(collision){
-            intersection_points_.push_back(get_intersection_point(collider));
+            cv::Point2d intersection = get_intersection_point(collider);
+            intersection_points_.push_back(intersection);
+            
+            double tti = calculate_tt_intersect(intersection);
+            if(tti < this -> get_tti()){
+                this -> set_tti(tti);
+                // std::cout << "set_tti to: " << this -> get_tti() << std::endl;
+            }
+            
         }
+
 //         std::cout << "IDS: " << this -> get_id() << " : " << collider.get_id() <<  " ";
 // std::cout << "{{" << trajectory_seg -> p1.x << "," << trajectory_seg ->  p1.y << "},{"
 //     << trajectory_seg -> p2.x << "," << trajectory_seg -> p2.y << "}}" << " WITH "
@@ -94,7 +142,8 @@ public:
 
         cv::Scalar color; 
         // = collides_ ? cv::Scalar(255,145,0) : cv::Scalar(0,255,200);
-        std::cout << "Visu host: " << this -> get_id() << " collides = " << collides_ << std::endl;
+        // std::cout << "Visu host: " << this -> get_id() << " collides = " << collides_ << std::endl;
+        
         if(collides_){
             color = cv::Scalar(0,145,255);
         }else{
@@ -105,7 +154,12 @@ public:
 		cv::arrowedLine(output_frame, p1, p2, color,2);
 
 		double font_scale = 0.75;
-		std::string s = "T:" + std::to_string(this -> get_id());
+
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << this -> get_tti();
+        std::string tti_str = this -> get_tti() != std::numeric_limits<double>::infinity() ? " | TTI: " +  stream.str() + "s" : "";
+
+		std::string s = "T:" + std::to_string(this -> get_id()) + tti_str;
 		cv::Size textSize = cv::getTextSize(s, cv::FONT_HERSHEY_DUPLEX, font_scale, 1, 0);
 		cv::Rect textBox(p1.x, p1.y - textSize.height, textSize.width, textSize.height);
 
