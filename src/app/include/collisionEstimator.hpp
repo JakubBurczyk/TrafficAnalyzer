@@ -101,7 +101,7 @@ public:
         if(m.velocity() > 0.5){
             
             tti = distance / m.velocity();
-            std::cout << " | tti: " << tti << std::endl;
+            // std::cout << " | tti: " << tti << std::endl;
         }
 
         return tti;
@@ -226,7 +226,7 @@ public:
 		for(const auto& collider : colliders_){
 			collider.visualize(visualization_frame);
 		}
-        std::cout << "---------------------\n";
+        // std::cout << "---------------------\n";
 		return visualization_frame;
 	}
     

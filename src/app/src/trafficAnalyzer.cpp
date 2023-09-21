@@ -66,12 +66,19 @@ void TrafficAnalyzer::create_processor(PROCESSING_TYPE type){
     std::function update_callback = processor_updates_[type];
     processor.initialized = true;
     processor.thr = std::thread([this, update_callback](){
+        set_params();
+
         while(true){
             if(!is_running()){ break; }
             update_callback();
         }
         return;
     });
+}
+
+void TrafficAnalyzer::set_params(){
+    tracker_ -> set_fps(frame_provider_ -> get_fps());
+    trajectory_ -> set_fps(frame_provider_ -> get_fps());
 }
 
 void TrafficAnalyzer::join_processor(PROCESSING_TYPE type){

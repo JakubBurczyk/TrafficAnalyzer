@@ -69,6 +69,8 @@ protected:
     bool start(bool &thread_prev_initialized, std::function<void(void)> join_callback);
     void run();
 
+    void set_params();
+
     void create_processor(PROCESSING_TYPE type);
     void join_processor(PROCESSING_TYPE type);
 

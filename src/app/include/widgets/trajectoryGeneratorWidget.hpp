@@ -87,6 +87,11 @@ public:
             image_viewer_heatmap_ -> toggle_enabled();
         }
 
+        if(ImGui::Button("Reset heatmaps")){
+            trajectory_ -> reset();
+            frame_heatmap_ = cv::Scalar(0,0,0);
+        }
+
         if(ImGui::Button("Presence Heatmap")){
             if(image_viewer_heatmap_ -> is_enabled()){
                 frame_heatmap_ = trajectory_ -> generate_presence_heatmap();

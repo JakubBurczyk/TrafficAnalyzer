@@ -21,7 +21,9 @@ private:
     bool running_ = false;
     bool ready_ = false;
     bool video_mode_ = false;
-
+    double fps_ = 60;
+    uint32_t width_ = 1920;
+    uint32_t height_ = 1080;
     int frame_cnt_ = 0;
 
     std::string path_ = "";
@@ -70,6 +72,9 @@ public:
         path_initialized_ = true;
     }
 
+    double get_fps(){ std::cout << "FRAME PROVIDER | reporting FPS: " << fps_ << std::endl; return fps_; }
+    uint32_t get_width(){ return width_; }
+    uint32_t get_height(){ return height_; }
 
     void start(){
         if(running_){ return; }
@@ -78,6 +83,11 @@ public:
         frame_cnt_ = 0;
         if(video_mode_){
             ready_ = video_capture_.open(path_);
+            fps_ = video_capture_.get(cv::CAP_PROP_FPS);
+            width_ = video_capture_.get(cv::CAP_PROP_FRAME_WIDTH);
+            height_ = video_capture_.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+            std::cout << "Video fps: " << fps_ << std::endl;
         }
         else{
             auto imgs = utils::get_files_by_extensions(path_,IMAGE_FORMATS);

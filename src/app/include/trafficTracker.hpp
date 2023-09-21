@@ -3,6 +3,7 @@
 #include "tracklet.hpp"
 #include "Hungarian.h"
 #include "hungarian_data.hpp"
+
 /*
 
 	vector< vector<double> > costMatrix = { {1,2},{2,1},{0,3} };
@@ -28,7 +29,11 @@ private:
 	HungarianAlgorithm HungAlgo_;
 	
 	std::vector<std::shared_ptr<Tracklet>> tracklets_;
+
 	cv::Mat frame_;
+
+	uint32_t fps_ = 60;
+
 protected:
 
 	void remove_tracklet(uint64_t id){
@@ -120,7 +125,7 @@ protected:
 				}
 			}else{
 				KalmanOptions options;
-				options.fps = 60;
+				options.fps = fps_;
 				options.inititial_measurement.x = (float)detection.box.x;
 				options.inititial_measurement.y = (float)detection.box.y;
 				auto new_tracklet = std::make_shared<Tracklet>(options, detection);
@@ -173,9 +178,12 @@ protected:
 
 public:
 
-	TrafficTracker(){
-
+	TrafficTracker()
+	{
+		
 	}
+
+	void set_fps(uint32_t value){ fps_ = value; }
 
 	std::mutex& get_mtx_tracks() { return mtx_notify_tracks_; }
 	std::condition_variable& get_cv_tracks(){ return cv_tracks_; }

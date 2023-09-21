@@ -53,8 +53,20 @@ protected:
     }
 
     void add_to_channel(cv::Point2d p, cv::Mat &channel, float value){
-        float& channel_point_ref = channel.at<float>(p);
-        channel_point_ref = channel_point_ref + value;
+        try{
+            if(p.x < 0 || p.x > options_.frame_width || p.y < 0 || p.y > options_.frame_height){ return; }
+            // std::cout << "TrajectoryGenerator | Reading ref to channel at (" << p.x <<" ; "<< p.y << ")" << std::endl;
+            float& channel_point_ref = channel.at<float>(p);
+            // float ch_value = channel.at<float>(p);
+            // std::cout << "TrajectoryGenerator | adding values" << std::endl;
+            // std::cout << "TrajectoryGenerator | Adding value = "<< value << "to value " << channel_point_ref << std::endl;
+            channel_point_ref = channel_point_ref + value;
+            // channel.at<float>(p) = ch_value + value;
+            // std::cout << "TrajectoryGenerator | Adding to channel done" << std::endl;
+        }
+        catch(std::exception &e){
+
+        }
     }
 
     void add_to_channel(cv::Rect rect, cv::Mat &channel, float value){
@@ -71,25 +83,32 @@ protected:
     }
 
     void apply_presence_count(std::shared_ptr<Tracklet> tracklet){
+        // std::cout << "TrajectoryGenerator | Applying presence" << std::endl;
         float count_increment = 1.0f;
         auto center = tracklet -> get_center();
         add_to_channel(tracklet -> get_center(), presence_count_channel_, count_increment);
+        // std::cout << "TrajectoryGenerator | Applying presence done" << std::endl;
     }
 
     void apply_absolute_velocity(std::shared_ptr<Tracklet> tracklet){
+        // std::cout << "TrajectoryGenerator | Applying abs vel" << std::endl;
         float velocity = tracklet -> get_corrected_measurement().velocity();
 
         add_to_channel(tracklet -> get_center(), velocity_abs_channel_, velocity);
+        // std::cout << "TrajectoryGenerator | Applying abs vel done" << std::endl;
     }
 
     void apply_separated_velocities(std::shared_ptr<Tracklet> tracklet){
+        // std::cout << "TrajectoryGenerator | Applying separated vel" << std::endl;
         Measurement m = tracklet -> get_corrected_measurement();
         cv::Point2d p = tracklet -> get_center();
         add_to_channel(p, velocity_x_channel_, m.v_x);
         add_to_channel(p, velocity_y_channel_, m.v_y);
+        // std::cout << "TrajectoryGenerator | Applying separated vel done" << std::endl;
     }
 
     void apply_tracklets_to_channels(std::vector<std::shared_ptr<Tracklet>> tracklets){
+        // std::cout << "TrajectoryGenerator | Applying tracklets" << std::endl;
         for(const auto &tracklet : tracklets){
             apply_presence_count(tracklet);
 
@@ -102,6 +121,7 @@ protected:
             }
 
         }
+        // std::cout << "TrajectoryGenerator | Applying tracklets done" << std::endl;
     }
 
     cv::Mat color_heatmap(cv::Mat heatmap, int color = -1){
@@ -167,19 +187,27 @@ public:
     std::condition_variable& get_cv_update() { return cv_update_trajectories; }
     TrajectoryOptions& get_options_ref(){ return options_; }
 
+    void set_fps(uint32_t value){options_.fps = value;}
+    void set_width(uint32_t value){ options_.frame_width = value; }
+    void set_height(uint32_t value){ options_.frame_height = value; }
+
     void update(std::vector<std::shared_ptr<Tracklet>> tracklets){
-        std::unique_lock<std::mutex> lock(mtx_trajectories_);
-        apply_tracklets_to_channels(tracklets);
-        cv_update_trajectories.notify_all();
+        try{
+            // std::cout << "TrajectoryGenerator | Update" << std::endl;
+            std::unique_lock<std::mutex> lock(mtx_trajectories_);
+            apply_tracklets_to_channels(tracklets);
+            cv_update_trajectories.notify_all();
+            // std::cout << "TrajectoryGenerator | Update done" << std::endl;
+        }
+        catch(std::exception &e){
+
+        }
     }
 
     void reset(){
         initialize();
     }
 
-    void generate_heatmaps(){
-        
-    }
 
     cv::Mat generate_presence_heatmap(){
         std::unique_lock<std::mutex> lock(mtx_trajectories_);
