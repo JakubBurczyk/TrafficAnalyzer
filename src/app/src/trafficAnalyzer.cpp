@@ -52,13 +52,13 @@ void TrafficAnalyzer::start_processor(PROCESSING_TYPE type){
 
     if(running){
         stop();
-        
     }else{
         run();
     }
 
     join_processor(type);
     create_processor(type);
+    
 }
 
 void TrafficAnalyzer::create_processor(PROCESSING_TYPE type){
@@ -86,9 +86,11 @@ void TrafficAnalyzer::join_processor(PROCESSING_TYPE type){
         if(processor.initialized){
             if(processor.thr.joinable()){
                 processor.thr.join();
+
             }
         }
     }
+
 
 bool TrafficAnalyzer::update_detector(bool run)
 {

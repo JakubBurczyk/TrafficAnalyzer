@@ -22,9 +22,9 @@ private:
 protected:
 
     void traffic_analyzer_gui(){
-        ImGui::Text("Video");
+        ImGui::Text("Traffic collision analysis");
 
-        if(ImGui::Button("Start video preview")){
+        if(ImGui::Button("Start traffic analysis")){
             analyzer_ -> start_processor(PROCESSING_TYPE::TRAFFIC_ANALYZER);
         }
         

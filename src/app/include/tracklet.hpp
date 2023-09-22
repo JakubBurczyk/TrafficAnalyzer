@@ -20,6 +20,12 @@ private:
 	KalmanOptions options_;
 
 	bool allowed_updates_ = false;
+
+	uint64_t frame_lifetime_ = 0;
+	double total_distance = 0;
+	double avg_speed = 0;
+	double avg_x_vel = 0;
+	double avg_y_vel = 0;
 	
 
 protected:
@@ -74,6 +80,10 @@ public:
 		center.y = current_detection_.box.y + current_detection_.box.height/2;
 		return center;
 	}
+
+	cv::Rect get_bb() const {
+		return current_detection_.box;
+	}
 	
 	Measurement get_corrected_measurement(bool centered=false) const{
 		Measurement m = kalman_ -> get_corrected_measurement();
@@ -89,8 +99,12 @@ public:
 
 
 	void update(Detection detection){
+		
 		// previous_detection_ = current_detection_;
 		current_detection_ = detection;
+
+		double prev_x = measurement_.x;
+		double prev_y = measurement_.y;
 
 		measurement_.x = (float)current_detection_.box.x;
 		measurement_.y = (float)current_detection_.box.y;
@@ -104,16 +118,28 @@ public:
 
 		kalman_ -> update(measurement_);
 
-		Measurement corrected = kalman_ -> get_corrected_measurement();
+		measurement_ = kalman_ -> get_corrected_measurement();
 
 		// std::cout 	<< "Updated tracker " << id_
 		// 			<< " corrected to | x = " << corrected.x
 		// 			<< " | y = " << corrected.y
 		// 			<< std::endl;
 
-		current_detection_.box.x = corrected.x;
-		current_detection_.box.y = corrected.y;
+		current_detection_.box.x = measurement_.x;
+		current_detection_.box.y = measurement_.y;
 		
+		if(frame_lifetime_ > 0){
+			double dx = prev_x - measurement_.x;
+			double dy = prev_y - measurement_.y;
+
+			total_distance += std::sqrt(dx*dx + dy*dy);
+			avg_speed += (measurement_.velocity() - avg_speed) / (frame_lifetime_ + 1);
+			avg_x_vel += (measurement_.v_x - avg_x_vel) / (frame_lifetime_ + 1);
+			avg_y_vel += (measurement_.v_y - avg_y_vel) / (frame_lifetime_ + 1);
+		}
+		
+		
+		frame_lifetime_ += 1;
 		// std::cout << "\n###############################\n\n";
 	}
 
@@ -140,6 +166,13 @@ public:
 
 		cv::rectangle(output_frame, box, color);
 	}
+
+	double get_total_distance(){ return total_distance; }
+	double get_avg_speed(){ return avg_speed; }
+	double get_frame_lifetime(){ return frame_lifetime_;}
+	double get_avg_x_vel() { return avg_x_vel; }
+	double get_avg_y_vel() { return avg_y_vel; }
 };
+
 
 } // namespace Traffic

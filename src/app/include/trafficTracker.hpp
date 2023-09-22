@@ -3,29 +3,15 @@
 #include "tracklet.hpp"
 #include "Hungarian.h"
 #include "hungarian_data.hpp"
+#include "dataLogger.hpp"
 
-/*
-
-	vector< vector<double> > costMatrix = { {1,2},{2,1},{0,3} };
-
-	HungarianAlgorithm HungAlgo;
-	vector<int> assignment;
-
-	double cost = HungAlgo.Solve(costMatrix, assignment);
-
-	for (unsigned int x = 0; x < costMatrix.size(); x++)
-		std::cout << x << ", assigned job:" << assignment[x] << "\t";
-
-	std::cout << "\ncost: " << cost << std::endl;
-
-*/
 namespace Traffic{
 
 class TrafficTracker{
 private:
 	std::mutex mtx_notify_tracks_;
 	std::condition_variable cv_tracks_;
-
+	
 	HungarianAlgorithm HungAlgo_;
 	
 	std::vector<std::shared_ptr<Tracklet>> tracklets_;
@@ -33,6 +19,13 @@ private:
 	cv::Mat frame_;
 
 	uint32_t fps_ = 60;
+
+	std::string logs_path_ = "./";
+	uint32_t tracklets_log_;
+	LoggerOptions logger_options_;
+	std::shared_ptr<DataLogger> logger_;
+
+	bool log_initialized_ = false;
 
 protected:
 
@@ -45,6 +38,10 @@ protected:
 
 			if(tracklets_[i]-> get_id() == id){
 				// std::cout << "trying to delete " << id << "size: " << tracklets_.size() << std::endl;
+
+				
+				logger_ -> log(tracklets_log_, get_tracklet_log_data(i));
+
 				tracklets_[i].reset();
 				// std::cout << "reset the pointer" << std::endl;
 				tracklets_.erase(tracklets_.begin() + i);
@@ -53,6 +50,18 @@ protected:
 			}
 
 		}
+	}
+
+	nlohmann::json get_tracklet_log_data(uint64_t i){
+		nlohmann::json data;
+		data["lifetime_frames"] = tracklets_[i] -> get_frame_lifetime();
+		data["lifetime_s"] = tracklets_[i] -> get_frame_lifetime() * 1 / fps_;
+		data["total_distance"] = tracklets_[i] -> get_total_distance();
+		data["avg_speed"] = tracklets_[i] -> get_avg_speed();
+		data["avg_x_vel"] = tracklets_[i] -> get_avg_x_vel();
+		data["avg_y_vel"] = tracklets_[i] -> get_avg_y_vel();
+		// std::cout << "Created data: " << data.dump(4) << std::endl;
+		return data;
 	}
 
 
@@ -157,6 +166,7 @@ protected:
 		for(int i = 0; i< tracklets_.size(); i++){
 			if(tracklets_[i] -> should_terminate()){
 				// std::cout << "trying to delete " << i << "size: " << tracklets_.size() << std::endl;
+				logger_ -> log(tracklets_log_, get_tracklet_log_data(i));
 				tracklets_[i].reset();
 				// std::cout << "reset the pointer" << std::endl;
 				tracklets_.erase(tracklets_.begin() + i);
@@ -180,15 +190,20 @@ public:
 
 	TrafficTracker()
 	{
-		
+		initialize_logger();
 	}
 
 	void set_fps(uint32_t value){ fps_ = value; }
 
 	std::mutex& get_mtx_tracks() { return mtx_notify_tracks_; }
 	std::condition_variable& get_cv_tracks(){ return cv_tracks_; }
+	std::shared_ptr<DataLogger> get_data_logger() { return logger_; }
 
 	void update(std::vector<Detection> detections, cv::Mat frame){
+		if(!log_initialized_){
+			initialize_logger();
+		}
+		
 		frame_ = frame;
 		// std::cout << "\n---------------------------------\n";
 		auto hungarian_data = calculate_assignments(detections);
@@ -204,6 +219,28 @@ public:
 		tracklets_ = std::vector<std::shared_ptr<Tracklet>>();
 		Tracklet::reset_ids();
 	}
+
+	void configure_logger(std::string path, LoggerOptions options){
+		logger_options_ = options;
+		logs_path_ = path;
+	}
+
+	void initialize_logger(){
+		log_initialized_ = true;
+		std::cout << "Initializing logger" << std::endl;
+		if(logger_){
+			logger_ -> stop();
+		}
+		
+		logger_ = std::make_shared<DataLogger>(logger_options_);
+		tracklets_log_ = logger_ -> add_logfile("tracklets_data",logs_path_);
+		logger_ -> start();
+	}
+
+	void reset_logger(){
+		log_initialized_ = false;
+	}
+
 
 	cv::Mat visualize_tracklets(){
 		cv::Mat visualization_frame = frame_.clone();

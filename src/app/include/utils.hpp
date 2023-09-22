@@ -67,7 +67,7 @@ static cv::Mat cvMatSignum(cv::Mat src)
 class LineSegment{
 public:
     cv::Point2d p1, p2;
-    double slope = 0;
+    double slope = 999;
     double intercept = 0;
     bool valid = true;
 

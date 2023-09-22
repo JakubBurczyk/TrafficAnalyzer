@@ -58,6 +58,8 @@ public:
             image_viewer_ -> toggle_enabled();
         }
 
+        
+
         ImGui::BeginChild("Frames");
         image_viewer_ -> show_image(visualization_frame_);
         ImGui::EndChild();
