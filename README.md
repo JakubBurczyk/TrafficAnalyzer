@@ -8,6 +8,7 @@ Main features:
 * Vehicle tracking using SORT algorithm
 * Road heatmap generation
 * Background estimation
+* Time to collision and PET metric calculation
 * Modular GUI
 
 #
@@ -25,12 +26,11 @@ Main features:
     width: 45%;
     " />
 <br/>
-
-<img src="./readme-assets/test.png"
+<img src="./readme-assets/tracker.png"
     alt="Markdown Monster icon"
     style="
     float: middle;
-    width: 45%;
+    width: 75%;
     " />
 
 </div>
@@ -79,13 +79,136 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 * [YOLOv8](https://github.com/ultralytics/ultralytics) - image recognition convolutional neural network architecture distributed with python scripts for training and inference as well as examples such as C++ use.
 
 
-## Example use
+# Example use
 
-### File selection
+## Input video file selection
+* On *`Image/Video Source`* tab click Select File.
 
-### Object tracking
+<br/>
+<div align="center">
+<img src="./readme-assets/video_selection.png"
+    alt="Video input control widget"
+    style="
+    width: 45%;
+    " />
+</div>
+<br/>
 
-### Heatmap generation
+* File browser will open with video file extension filter, select file and click *`ok`*.
+
+<br/>
+<div align="center">
+<img src="./readme-assets/file_selection.png"
+    alt="File browser"
+    style="
+    width: 45%;
+    " />
+</div>
+<br/>
+
+* First video frame should be possible to preview on *`Image/Video Source`* tab via *`Preview`* button.
+
+<br/>
+<div align="center">
+<img src="./readme-assets/frame_preview.png"
+    alt="Frame preview"
+    style="
+    float: middle;
+    width: 40%;
+    " />
+</div>
+
+## Object tracking
+* After selecting input video head over to *`Object Detector`* tab.
+* Select CUDA mode (0=CPU / 1=GPU).
+* Select NN model.
+
+<br/>
+<div align="center">
+<img src="./readme-assets/detector.png"
+    alt="Video input control widget"
+    style="
+    width: 45%;
+    " />
+</div>
+<br/>
+
+* On *`Traffic Analyzer`* tab click *`Start traffic analysis`* button.
+
+<br/>
+<div align="center">
+<img src="./readme-assets/traffic_analyzer.png"
+    alt="Video input control widget"
+    style="
+    width: 20%;
+    " />
+</div>
+<br/>
+
+* On *`Object Tracker`* tab click *`Preview`* button.
+* Detections and trackers should be visible on the preview.
+
+<br/>
+
+<div align="center">
+<img src="./readme-assets/tracker.png"
+    alt="File browser"
+    style="
+    width: 45%;
+    " />
+&nbsp;
+<img src="./readme-assets/tracking.png"
+    alt="Video input control widget"
+    style="
+    width: 29%;
+    " />
+</div>
+
+## Heatmap generation
+
+* If object tracking is running head to *`Traffic analyzer`* tab click *`Stop Processing`* button.
+* On the same tab (*`Traffic Analyzer`*) click *`Start trajectory generator`* button.
+* On *`Trajectory generator`* select colormap (TURBO is a good default)
+* On the same tab (*`Trajectory Generator`*) click *`Toggle heatmap`* button.
+* Then click on the corresponding heatmap button (e.g. *`Presence heatmap`*)
+
+<br/>
+<div align="center">
+<img src="./readme-assets/trajectory_generator.png"
+    alt="Video input control widget"
+    style="
+    width: 75%;
+    " />
+</div>
+<br/>
+
+## Example speed heatmaps
+<div align="center">
+<br/>
+<br/>
+<img src="./readme-assets/speed_30ms.gif"
+    alt="Video input control widget"
+    style="
+    width: 30%;
+    " />
+<br/>
+(magnitude)
+<br/>
+<br/>
+<img src="./readme-assets/x_30ms.gif"
+    alt="Video input control widget"
+    style="
+    width: 30%;
+    " />
+&nbsp;
+<img src="./readme-assets/y_30ms.gif"
+    alt="Video input control widget"
+    style="
+    width: 30%;
+    " />
+<br/>
+(x direction, y direction)
+</div>
 
 ## Special thanks to the developers of these projects:
 
