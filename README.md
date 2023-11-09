@@ -3,7 +3,7 @@
 An application written in C++ as project used for my Master's Thesis.\
 Tested on **`Ubuntu 22.04`** with **`RTX 3060-Ti`**.
 
-Main features:
+**Main features:**
 * Vehicle detection via cuDNN and a YOLOv8 model
 * Vehicle tracking using SORT algorithm
 * Road heatmap generation
@@ -16,38 +16,40 @@ Main features:
 * [Build](#build)
 * [NN Model](#neural-network-model)
 * [Other tools](#other-used-tools)
+* [Object tracker](#object-tracker)
 * [Usage](#example-use)
     * [Input video](#input-video-file-selection)
     * [Object tracking](#object-tracking)
     * [Heatmaps](#heatmap-generation)
         * [Example heatmaps](#example-speed-heatmaps)
-* [Reffereced repositories](#special-thanks-to-the-developers-of-these-projects)
+* [Reffereced and used 3rd party projects](#special-thanks-to-the-developers-of-these-projects)
 #
 
 <div align="center">
 <img src="./readme-assets/tracker.png"
     alt="Tracking module"
     style="
-    width: 30%;
+    width: 45%;
     " />
 &nbsp;
 <img src="./readme-assets/tracking.png"
     alt="SORT object tracking"
     style="
-    width: 19%;
+    width: 29%;
     " />
 <br/>
 <img src="./readme-assets/app.png"
     alt="Speed heatmap"
     style="
     float: middle;
-    width: 50%;
+    width: 75%;
     " />
 
 </div>
 &nbsp;
 
 ## Build dependencies
+***[Back to table of contents](#table-of-contents)***
 * **CUDA and cuDNN**\
 `CUDA version: 11.6`\
 It will most likely work with newer versions, mind you will have to modify **`./CMakeLists.txt`**.\
@@ -63,6 +65,8 @@ Built from srouce with CUDA and FFMPEG support.
 
 
 ## Build
+***[Back to table of contents](#table-of-contents)***
+
 The project uses [CMake](https://cmake.org) and [Ninja](https://ninja-build.org) as build systems.\
 Build scripts are located in **`./scripts`** directory which can be streamlined to use via VSCode tasks.
 
@@ -82,17 +86,77 @@ cd ./build/release/src/app && ./TrafficAnalyzer
 ```
 
 ## Neural Network Model
+***[Back to table of contents](#table-of-contents)***
+
 Project comes with a pretrained neural network based on YOLOv8-s architecture distributed as ONNX model.\
 Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 
 ## Other used tools
+***[Back to table of contents](#table-of-contents)***
 
 * [YOLOv8](https://github.com/ultralytics/ultralytics) - image recognition convolutional neural network architecture distributed with python scripts for training and inference as well as examples such as C++ use.
+
+## Object tracker
+***[Back to table of contents](#table-of-contents)***
+
+Application uses SORT multiple object tracking algorithm:
+[*Simple Online and Realtime Tracking* by A.Bewley, Z. Ge, L. Ott, F. Ramos, B. Upcroft](https://arxiv.org/abs/1602.00763)
+
+It is based on ***Intersection over Union*** metric of object position predicted using ***Kalman Filter*** and incoming detections, matched using ***hungarian algorithm*** for optimal assignment.
+
+System state matrices used in Kalman Filter:
+
+$`
+s_k=
+\begin{bmatrix}
+x\\
+y\\
+v_x\\
+v_y
+\end{bmatrix}_k=
+\begin{bmatrix}
+1 & 0 & T & 0\\
+0 & 1 & 0 & T\\
+0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+x\\
+y\\
+v_x\\
+v_y
+\end{bmatrix}_{k-1}+
+\begin{bmatrix}
+\frac{T^2}{2}\\
+\frac{T^2}{2}\\
+T\\
+T
+\end{bmatrix}a_{k-1}
+`$
+
+$`
+y_k=
+\begin{bmatrix}
+x\\
+y
+\end{bmatrix}=
+\begin{bmatrix}
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+x\\
+y\\
+v_x\\
+v_y
+\end{bmatrix}_k
+`$
 
 
 # Example use
 
 ## Input video file selection
+***[Back to table of contents](#table-of-contents)***
 * On *`Image/Video Source`* tab click Select File.
 
 <br/>
@@ -100,7 +164,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <img src="./readme-assets/video_selection.png"
     alt="Video input control widget"
     style="
-    width: 40%;
+    width: 50%;
     " />
 </div>
 <br/>
@@ -112,7 +176,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <img src="./readme-assets/file_selection.png"
     alt="File browser"
     style="
-    width: 40%;
+    width: 50%;
     " />
 </div>
 <br/>
@@ -125,11 +189,12 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
     alt="Frame preview"
     style="
     float: middle;
-    width: 35%;
+    width: 45%;
     " />
 </div>
 
 ## Object tracking
+***[Back to table of contents](#table-of-contents)***
 * After selecting input video head over to *`Object Detector`* tab.
 * Select CUDA mode (0=CPU / 1=GPU).
 * Select NN model.
@@ -139,7 +204,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <img src="./readme-assets/detector.png"
     alt="Video input control widget"
     style="
-    width: 45%;
+    width: 50%;
     " />
 </div>
 <br/>
@@ -151,7 +216,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <img src="./readme-assets/traffic_analyzer.png"
     alt="Video input control widget"
     style="
-    width: 20%;
+    width: 25%;
     " />
 </div>
 <br/>
@@ -176,7 +241,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 </div>
 
 ## Heatmap generation
-
+***[Back to table of contents](#table-of-contents)***
 * If object tracking is running head to *`Traffic analyzer`* tab click *`Stop Processing`* button.
 * On the same tab (*`Traffic Analyzer`*) click *`Start trajectory generator`* button.
 * On *`Trajectory generator`* select colormap (TURBO is a good default)
@@ -194,13 +259,14 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <br/>
 
 ## Example speed heatmaps
+***[Back to table of contents](#table-of-contents)***
 <div align="center">
 <br/>
 <br/>
 <img src="./readme-assets/speed_30ms.gif"
     alt="Video input control widget"
     style="
-    width: 30%;
+    width: 35%;
     " />
 <br/>
 Speed magnitude
@@ -209,7 +275,7 @@ Speed magnitude
 <img src="./readme-assets/x_30ms.gif"
     alt="Video input control widget"
     style="
-    width: 30%;
+    width: 35%;
     " />
 <br/>
 x direction speed
@@ -218,14 +284,14 @@ x direction speed
 <img src="./readme-assets/y_30ms.gif"
     alt="Video input control widget"
     style="
-    width: 30%;
+    width: 35%;
     " />
 <br/>
 y direction speed
 </div>
 
 ## Special thanks to the developers of these projects:
-
+***[Back to table of contents](#table-of-contents)***
 * Build system and GUI base [cpp-gui-template-sdl2](https://github.com/MartinHelmut/cpp-gui-template-sdl2)
 * Imgui file browser component [imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser)
 * Hungarian algorithm C++ implementation [hunharian-algorithm-cpp](https://github.com/mcximing/hungarian-algorithm-cpp)
