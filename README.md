@@ -11,26 +11,37 @@ Main features:
 * Time to collision and PET metric calculation
 * Modular GUI
 
+# Table of contents
+* [Dependencies](#build-dependencies)
+* [Build](#build)
+* [NN Model](#neural-network-model)
+* [Other tools](#other-used-tools)
+* [Usage](#example-use)
+    * [Input video](#input-video-file-selection)
+    * [Object tracking](#object-tracking)
+    * [Heatmaps](#heatmap-generation)
+        * [Example heatmaps](#example-speed-heatmaps)
+* [Reffereced repositories](#special-thanks-to-the-developers-of-these-projects)
 #
 
 <div align="center">
-<img src="./readme-assets/test.png"
-    alt="Markdown Monster icon"
+<img src="./readme-assets/tracker.png"
+    alt="Tracking module"
     style="
-    width: 45%;
+    width: 30%;
     " />
 &nbsp;
-<img src="./readme-assets/test.png"
-    alt="Markdown Monster icon"
+<img src="./readme-assets/tracking.png"
+    alt="SORT object tracking"
     style="
-    width: 45%;
+    width: 19%;
     " />
 <br/>
-<img src="./readme-assets/tracker.png"
-    alt="Markdown Monster icon"
+<img src="./readme-assets/app.png"
+    alt="Speed heatmap"
     style="
     float: middle;
-    width: 75%;
+    width: 50%;
     " />
 
 </div>
@@ -89,7 +100,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <img src="./readme-assets/video_selection.png"
     alt="Video input control widget"
     style="
-    width: 45%;
+    width: 40%;
     " />
 </div>
 <br/>
@@ -101,7 +112,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
 <img src="./readme-assets/file_selection.png"
     alt="File browser"
     style="
-    width: 45%;
+    width: 40%;
     " />
 </div>
 <br/>
@@ -114,7 +125,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
     alt="Frame preview"
     style="
     float: middle;
-    width: 40%;
+    width: 35%;
     " />
 </div>
 
@@ -192,7 +203,7 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
     width: 30%;
     " />
 <br/>
-(magnitude)
+Speed magnitude
 <br/>
 <br/>
 <img src="./readme-assets/x_30ms.gif"
@@ -200,14 +211,17 @@ Model file is located at **`./src/app/assets/NN-models/YOLOv8s-VSAI.onnx`**
     style="
     width: 30%;
     " />
-&nbsp;
+<br/>
+x direction speed
+<br/>
+<br/>
 <img src="./readme-assets/y_30ms.gif"
     alt="Video input control widget"
     style="
     width: 30%;
     " />
 <br/>
-(x direction, y direction)
+y direction speed
 </div>
 
 ## Special thanks to the developers of these projects:
